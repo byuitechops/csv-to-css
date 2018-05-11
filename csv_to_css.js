@@ -41,18 +41,22 @@ function csvToObj(csvString) {
 
 
 function objToCSS(csvObj) {
-    var metaDataTags = csvObj.columns.filter(column => column[0] === '@').map(col => col.slice(1));
+    var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
     var cssTags = csvObj.columns.filter(column => column[0] + column[1] === '--');
 
+    function toKeyVals(row, arrayIn) {
+        return arrayIn.reduce((acc, tag) => {
+            return acc += `\n${tag}: ${row[tag]};`;
+        }, '');
+    }
+
     var cssStrings = csvObj.map(row => {
-        var metaData = metaDataTags.reduce((acc, metaDataTag) => {
-            return acc += `\n${metaDataTag}: ${row[metaDataTag]}`;
-        }, '/*') + '\n*/';
-        var cssData = cssTags.reduce((acc, cssTag) => {
-            return acc += `\n${cssTag}: ${row[cssTag]};`;
-        }, `.${row.courseCode} {`) + '\n}';
+        var metaData = '/*' + toKeyVals(row, metaDataTags).replace(/@/g, '') + '\n*/';
+        var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
+
         return `\n${metaData}\n${cssData}\n${row.customCSS}`;
     });
+
     return cssStrings.join('\n');
 }
 
