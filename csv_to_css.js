@@ -1,6 +1,7 @@
 const request = require('request');
 const dsv = require('d3-dsv');
 const fs = require('fs');
+const prompt = require('prompt');
 
 /**
  * 
@@ -19,7 +20,8 @@ const fs = require('fs');
 
 // read the settings from wherever they are
 function readSettings() {
-    fs.read
+
+    // fs.read
 
     settings.push({
         'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
