@@ -17,6 +17,13 @@ const fs = require('fs');
  *      
  */
 
+// Temporary settings
+var settings = {
+    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
+    'filePath': './style.css'
+};
+
+
 // Read in csv file
 function urlToCsv(url) {
     return new Promise((resolve, reject) => {
@@ -60,16 +67,11 @@ function objToCSS(csvObj) {
     return cssStrings.join('\n');
 }
 
-var settings = {
-    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
-    'filePath': './style.css'
-};
-
 urlToCsv(settings.url)
     .then(csvToObj)
     .then(objToCSS)
     .then(cssString => {
         fs.writeFileSync(settings.filePath, cssString);
-        return console.log('IT\'S DONE, FOOL');
+        return console.log(`Wrote ${settings.filePath}`);
     })
     .catch(console.err);
