@@ -17,28 +17,20 @@ const fs = require('fs');
  *      
  */
 
-// Temporary settings
-var settings = [{
-    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
-    'filePath': './style.css'
-}, {
-    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
-    'filePath': './cssfile.css'
-}, {
-    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
-    'filePath': './practice1.css'
-}, {
-    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
-    'filePath': './practice2.css'
-}];
+// read the settings from wherever they are
+function readSettings() {
+    fs.read
 
-// function readSettings() {
-//     var settings = {
-//         'url': 'https://docs.google.com/spreadsheets/d/1oP6tgNLAf38ldIEYb4BavufCe_ihj2Y0mYscoG9ctzI/edit#gid=1272100',
-//         'filePath': './style.css'
-//     };
-//     return settings;
-// }
+    settings.push({
+        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
+        'filePath': './style.css'
+    }, {
+            'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
+            'filePath': './cssfile.css'
+        });
+
+    settings.push(settings);
+}
 
 // Read in csv file
 function urlToCsv(url) {
@@ -63,7 +55,7 @@ function csvToObj(csvString) {
 
 function objToCSS(csvObj) {
     var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
-    var cssTags = csvObj.columns.filter(column => column[0] + column[1] === '--');
+    var cssTags = csvObj.columns.filter(column => column.substr(0, 2) === '--');
 
     function toKeyVals(row, arrayIn) {
         return arrayIn.reduce((acc, tag) => {
@@ -81,6 +73,9 @@ function objToCSS(csvObj) {
     return cssStrings.join('\n');
 }
 
+var settings = [];
+
+readSettings();
 Promise.all(settings.map(setting => {
     return urlToCsv(setting.url)
         .then(csvToObj)
