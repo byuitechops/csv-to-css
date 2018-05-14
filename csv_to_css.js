@@ -23,6 +23,13 @@ var settings = {
     'filePath': './style.css'
 };
 
+function readSettings() {
+    var settings = {
+        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
+        'filePath': './style.css'
+    };
+    return settings;
+}
 
 // Read in csv file
 function urlToCsv(url) {
@@ -39,13 +46,11 @@ function urlToCsv(url) {
     });
 }
 
-
 // Format csv to js obj
 function csvToObj(csvString) {
     var csvObj = dsv.csvParse(csvString);
     return csvObj;
 }
-
 
 function objToCSS(csvObj) {
     var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
@@ -67,7 +72,8 @@ function objToCSS(csvObj) {
     return cssStrings.join('\n');
 }
 
-urlToCsv(settings.url)
+readSettings()
+    .then(urlToCsv(settings.url))
     .then(csvToObj)
     .then(objToCSS)
     .then(cssString => {
