@@ -18,18 +18,27 @@ const fs = require('fs');
  */
 
 // Temporary settings
-var settings = {
+var settings = [{
     'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
     'filePath': './style.css'
-};
+}, {
+    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
+    'filePath': './cssfile.css'
+}, {
+    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
+    'filePath': './practice1.css'
+}, {
+    'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
+    'filePath': './practice2.css'
+}];
 
-function readSettings() {
-    var settings = {
-        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
-        'filePath': './style.css'
-    };
-    return settings;
-}
+// function readSettings() {
+//     var settings = {
+//         'url': 'https://docs.google.com/spreadsheets/d/1oP6tgNLAf38ldIEYb4BavufCe_ihj2Y0mYscoG9ctzI/edit#gid=1272100',
+//         'filePath': './style.css'
+//     };
+//     return settings;
+// }
 
 // Read in csv file
 function urlToCsv(url) {
@@ -72,12 +81,13 @@ function objToCSS(csvObj) {
     return cssStrings.join('\n');
 }
 
-readSettings()
-    .then(urlToCsv(settings.url))
-    .then(csvToObj)
-    .then(objToCSS)
-    .then(cssString => {
-        fs.writeFileSync(settings.filePath, cssString);
-        return console.log(`Wrote ${settings.filePath}`);
-    })
-    .catch(console.err);
+Promise.all(settings.map(setting => {
+    return urlToCsv(setting.url)
+        .then(csvToObj)
+        .then(objToCSS)
+        .then(cssString => {
+            fs.writeFileSync(setting.filePath, cssString);
+            return console.log(`Wrote ${setting.filePath}`);
+        })
+        .catch(console.err)
+}));
