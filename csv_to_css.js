@@ -2,6 +2,7 @@ const request = require('request');
 const dsv = require('d3-dsv');
 const fs = require('fs');
 const prompt = require('prompt');
+const validateCSS = require('css-validator');
 
 /**
  * 
@@ -61,18 +62,33 @@ function objToCSS(csvObj) {
 
     function toKeyVals(row, arrayIn) {
         return arrayIn.reduce((acc, tag) => {
-            return acc += `\n${tag}: ${row[tag]};`;
+            if (row[tag] !== '') {
+                acc += `\n${tag}: ${row[tag]};`;
+            }
+            return acc;
         }, '');
     }
 
     var cssStrings = csvObj.map(row => {
         var metaData = '/*' + toKeyVals(row, metaDataTags).replace(/@/g, '') + '\n*/';
         var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
-
-        return `\n${metaData}\n${cssData}\n${row.customCSS}`;
+        if (cssData !== '. {\n}') return `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}`;
+        return null;
     });
+    return cssStrings.filter(str => str !== null).join('\n');
+}
 
-    return cssStrings.join('\n');
+function validateCss(cssString) {
+    var options = {
+        text: cssString,
+        warning: 0
+    }
+    validateCSS(cssString, (err, data) => {
+        data.errors.forEach(error => {
+            console.log(`There is a ${error.message.trim()} on line ${error.line}`);
+            // console.log(`The error message is ${error.message.trim()}`);
+        });
+    });
 }
 
 var settings = [];
@@ -82,9 +98,10 @@ Promise.all(settings.map(setting => {
     return urlToCsv(setting.url)
         .then(csvToObj)
         .then(objToCSS)
+        // .then(validateCss)
         .then(cssString => {
             fs.writeFileSync(setting.filePath, cssString);
-            return console.log(`Wrote ${setting.filePath}`);
+            return console.log(`Wrote ${setting.filePath}`)
         })
         .catch(console.err)
 }));
