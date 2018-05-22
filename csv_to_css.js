@@ -31,8 +31,6 @@ function readSettings() {
             'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
             'filePath': './cssfile.css'
         });
-
-    settings.push(settings);
 }
 
 // Read in csv file
@@ -40,7 +38,7 @@ function urlToCsv(url) {
     return new Promise((resolve, reject) => {
         var options = {
             method: 'GET',
-            url: url
+            uri: url
         };
 
         request(options, (err, response, body) => {
@@ -78,20 +76,26 @@ function objToCSS(csvObj) {
     return cssStrings.filter(str => str !== null).join('\n');
 }
 
-function validateCss(cssString) {
+function validateCss(cssString, filePath) {
     var options = {
         text: cssString,
         warning: 0
     }
+    count = 0;
     validateCSS(cssString, (err, data) => {
         data.errors.forEach(error => {
-            console.log(`There is a ${error.message.trim()} on line ${error.line}`);
-            // console.log(`The error message is ${error.message.trim()}`);
+            // console.log(error);
+            // if (!error) return
+            console.log(`${error.message.trim()} ${filePath} Line ${error.line} `)
+            // console.log(`There is a ${error.message.trim()} on line ${error.line} `);
+            count ++
         });
     });
+    if (count > 0) return valid = false;
 }
 
 var settings = [];
+let valid = true;
 
 readSettings();
 Promise.all(settings.map(setting => {
@@ -100,8 +104,11 @@ Promise.all(settings.map(setting => {
         .then(objToCSS)
         // .then(validateCss)
         .then(cssString => {
+            validateCss(cssString, setting.filePath);
+            if (valid){
             fs.writeFileSync(setting.filePath, cssString);
+            console.log(valid);
             return console.log(`Wrote ${setting.filePath}`)
-        })
+        }})
         .catch(console.err)
 }));
