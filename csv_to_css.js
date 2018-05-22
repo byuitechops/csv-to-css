@@ -28,9 +28,9 @@ function readSettings() {
         'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
         'filePath': './style.css'
     }, {
-            'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
-            'filePath': './cssfile.css'
-        });
+        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
+        'filePath': './cssfile.css'
+    });
 }
 
 // Read in csv file
@@ -80,35 +80,38 @@ function validateCss(cssString, filePath) {
     var options = {
         text: cssString,
         warning: 0
-    }
-    count = 0;
+    };
     validateCSS(cssString, (err, data) => {
-        data.errors.forEach(error => {
-            // console.log(error);
-            // if (!error) return
-            console.log(`${error.message.trim()} ${filePath} Line ${error.line} `)
-            // console.log(`There is a ${error.message.trim()} on line ${error.line} `);
-            count ++
-        });
+        if (data.errors) {
+            data.errors.forEach(error => {
+                // console.log(error);
+                // if (!error) return
+                console.log(`${error.message.trim()} ${filePath} Line ${error.line} `);
+                // console.log(`There is a ${error.message.trim()} on line ${error.line} `);
+            });
+            valid = false;
+            return;
+        }
     });
-    if (count > 0) return valid = false;
+    return cssString;
 }
 
 var settings = [];
-let valid = true;
+var valid = true;
 
 readSettings();
 Promise.all(settings.map(setting => {
     return urlToCsv(setting.url)
         .then(csvToObj)
         .then(objToCSS)
-        // .then(validateCss)
+        .then(validateCss)
         .then(cssString => {
-            validateCss(cssString, setting.filePath);
-            if (valid){
-            fs.writeFileSync(setting.filePath, cssString);
-            console.log(valid);
-            return console.log(`Wrote ${setting.filePath}`)
-        }})
-        .catch(console.err)
+            if (valid === true) {
+                fs.writeFileSync(setting.filePath, cssString);
+                console.log(valid);
+                return console.log(`Wrote ${setting.filePath}`);
+            }
+            return console.log('Please fix the errors');
+        })
+        .catch(console.err);
 }));
