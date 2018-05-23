@@ -32,8 +32,6 @@ function readSettings() {
             'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
             'filePath': './cssfile.css'
         });
-
-    settings.push(settings);
 }
 
 // Read in csv file
@@ -41,7 +39,7 @@ function urlToCsv(url) {
     return new Promise((resolve, reject) => {
         var options = {
             method: 'GET',
-            url: url
+            uri: url
         };
 
         request(options, (err, response, body) => {
@@ -110,7 +108,7 @@ function validateCss(cssString, setting) {
 
 // minify css file
 function minifyCss() {
-    cleanCSS.;
+    cleanCSS
 }
 
 var settings = [];
