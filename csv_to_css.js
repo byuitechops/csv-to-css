@@ -1,9 +1,8 @@
 const request = require('request');
 const dsv = require('d3-dsv');
 const fs = require('fs');
-const Enquirer = require('enquirer');
-const enquirer = new Enquirer();
-const validateCSS = require('css-validator');
+const prompt = require('prompt');
+const validate = require('csstree-validator');
 // const cleanCSS = require('clean-css');
 
 /**
@@ -24,35 +23,16 @@ const validateCSS = require('css-validator');
 // read the settings from wherever they are
 function readSettings() {
 
-    function askQuestion() {
-        return new Promise((resolve, reject) => {
-            enquirer.questions({
-                name: 'path',
-                'What is the path to the saved css file?'
-            });
-            enquirer.question('url', 'What is the URL to the csv file?');
-            resolve(enquirer.ask('path', 'url'));
-        });
-    }
+    // let fileObject = fs.readFile(/*'filepath */, utf8);
 
-    let settings = [];
-    askQuestion()
-        .then(answers => {
-            settings.push({
-                'url': answers.url,
-                'filePath': answers.path
-            });
-        });
-    console.log(settings);
-    return settings;
-
-    // settings.push({
-    //     'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
-    //     'filePath': './style.css'
-    // }, {
-    //     'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
-    //     'filePath': './cssfile.css'
-    // });
+    settings.push({
+        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
+        'filePath': './style.css'
+    }, {
+        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
+        'filePath': './cssfile.css'
+    });
+    console.log('Settings read');
 }
 
 // Read in csv file
@@ -68,14 +48,17 @@ function urlToCsv(url) {
             resolve(body);
         });
     });
+    console.log('CSV obj created');
 }
 
 // Format csv to js obj
 function csvToObj(csvString) {
     var csvObj = dsv.csvParse(csvString);
+    console.log('CSV obj created');
     return csvObj;
 }
 
+// change the js object to correctly formatted css.
 function objToCSS(csvObj) {
     var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
     var cssTags = csvObj.columns.filter(column => column.substr(0, 2) === '--');
@@ -95,62 +78,40 @@ function objToCSS(csvObj) {
         if (cssData !== '. {\n}') return `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}`;
         return null;
     });
+    console.log('css created')
     return cssStrings.filter(str => str !== null).join('\n');
 }
 
 function validateCss(cssString, setting) {
-    return new Promise((resolve, reject) => {
-        // if (err) {
-        //     console.log(err);
-        //     reject(err);
-        // }
-        var options = {
-            text: cssString,
-            warning: 0
-        }
-        var cleanString = cssString.replace(/\s*/g, '').replace(/\n*/g, '');
-        // console.log(cssString);
-        validateCSS(cleanString, (err, data) => {
-            if (data.errors.length !== 0) {
-                // console.log(data.errors);
-                data.errors.forEach(error => {
-                    console.log(`There is a ${error.message.trim()} on line ${error.line} of ${setting.filePath}`);
-                });
-                console.log(`Please fix the errors in file ${setting.filePath}`);
-                valid = false;
-                resolve(valid);
-            } else {
-                resolve(cssString);
-            }
-        });
-    })
+    var cleanString = cssString.replace(/\s*/g, '').replace(/\n*/g, '');
+    let errors = validate.validateString(cleanString, setting.filePath);
+    if (errors.messgae) console.log(errors.message);
 }
 
-// minify css file
-function minifyCss() {
-    cleanCSS
-}
-
-let valid = true;
+var settings = [];
 
 readSettings();
-// Promise.all(readSettings()
-//     .then(settings => settings.map(setting => {
-//         return urlToCsv(setting.url)
-//             .then(csvToObj)
-//             .then(objToCSS)
-//             // .then(cssString => {
-//             //     return validateCss(cssString, setting);
-//             // })
-//             .then(cssString => {
-//                 validateCss(cssString, setting)
-//                     .then(() => {
-//                         if (valid === true) {
-//                             fs.writeFileSync(setting.filePath, cssString);
-//                             return console.log(`Wrote ${setting.filePath}`);
-//                         } else console.log('Fix the errors to write the files.');
-//                     });
-//             })
+async function main() {
+    for (let i = 0; i < settings.length; i++) {
+        let csvString = await urlToCsv(settings[i].url);
+        let cssObj = csvToObj(csvString);
+        let cssString = objToCSS(cssObj);
+        // let validatedCSS =
+    }
+}
 
-//             .catch(console.err);
-//     })));
+// settings.map(setting => {
+//     return urlToCsv(setting.url)
+//         .then(csvToObj)
+//         .then(objToCSS)
+//         // .then(cssString => {
+//         //     return validateCss(cssString, setting);
+//         // })
+//         .then(cssString => {
+//             validateCss(cssString, setting);
+//             fs.writeFileSync(setting.filePath, cssString);
+//             return console.log(`Wrote ${setting.filePath}`);
+
+//         })
+
+//         .catch(console.err);
