@@ -1,0 +1,27 @@
+{
+  "name": "csv-to-css",
+  "version": "1.0.0",
+  "description": "",
+  "main": "csv_to_css.js",
+  "dependencies": {
+    "csstree-validator": "^1.4.0",
+    "d3-dsv": "^1.0.8",
+    "fs": "^0.0.1-security",
+    "prompt": "^1.0.0",
+    "request": "^2.87.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/byuitechops/csv-to-css.git"
+  },
+  "author": "Theron Dowdle",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/byuitechops/csv-to-css/issues"
+  },
+  "homepage": "https://github.com/byuitechops/csv-to-css#readme"
+}

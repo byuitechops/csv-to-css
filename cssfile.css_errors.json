@@ -1,0 +1,10 @@
+[
+    {
+        "name": "./cssfile.css",
+        "line": 20,
+        "column": 24,
+        "property": "background-coor",
+        "message": "Unknown property `background-coor`",
+        "details": null
+    }
+]
