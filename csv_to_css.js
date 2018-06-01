@@ -3,36 +3,21 @@ const dsv = require('d3-dsv');
 const fs = require('fs');
 const prompt = require('prompt');
 const validate = require('csstree-validator');
+const reporter = require('csstree-validator').reporters.json;
 // const cleanCSS = require('clean-css');
-
-/**
- * 
- * Settings:
- *      custom file: "path""url"
- *      csv file: "url"
- *      output file name: "path"
- * 
- * 1. Read in csv file (async)
- *      requestjs
- * 2. csv format to js object format
- *      d3-dsv
- * 3. js object to css
- *      
- */
 
 // read the settings from wherever they are
 function readSettings() {
 
     // let fileObject = fs.readFile(/*'filepath */, utf8);
 
-    settings.push({
+    return [{
         'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
         'filePath': './style.css'
     }, {
         'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
         'filePath': './cssfile.css'
-    });
-    console.log('Settings read');
+    }];
 }
 
 // Read in csv file
@@ -48,13 +33,11 @@ function urlToCsv(url) {
             resolve(body);
         });
     });
-    console.log('CSV obj created');
 }
 
 // Format csv to js obj
 function csvToObj(csvString) {
     var csvObj = dsv.csvParse(csvString);
-    console.log('CSV obj created');
     return csvObj;
 }
 
@@ -78,40 +61,45 @@ function objToCSS(csvObj) {
         if (cssData !== '. {\n}') return `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}`;
         return null;
     });
-    console.log('css created')
     return cssStrings.filter(str => str !== null).join('\n');
 }
 
-function validateCss(cssString, setting) {
-    var cleanString = cssString.replace(/\s*/g, '').replace(/\n*/g, '');
-    let errors = validate.validateString(cleanString, setting.filePath);
-    if (errors.messgae) console.log(errors.message);
+// Validate the CSS string
+function validateCssAndErrorLog(cssString, path) {
+    // var cleanString = cssString.replace(/\s*/g, '').replace(/\n*/g, '');
+    let errors = reporter(validate.validateString(cssString, path));
+
+    if (JSON.parse(errors).length !== 0) {
+        console.log(`Invalid CSS in file ${path}`);
+        writeFile(`${path}_errors.json`, errors);
+    } else {
+        console.log(`Valid CSS in file ${path}`);
+    }
+    return errors;
 }
 
-var settings = [];
+// Write the validated CSS to the specified path
+function writeFile(path, fileGuts) {
+    fs.writeFileSync(path, fileGuts);
+    console.log(`${path} written`);
+}
 
-readSettings();
 async function main() {
+    let settings = readSettings();
     for (let i = 0; i < settings.length; i++) {
-        let csvString = await urlToCsv(settings[i].url);
-        let cssObj = csvToObj(csvString);
-        let cssString = objToCSS(cssObj);
-        // let validatedCSS =
+        try {
+            let csvString = await urlToCsv(settings[i].url);
+            let cssObj = csvToObj(csvString);
+            let cssString = objToCSS(cssObj);
+            let errors = validateCssAndErrorLog(cssString, settings[i].filePath);
+            // Write the CSS file if there are no errors
+            if (JSON.parse(errors).length === 0) {
+                writeFile(settings[i].filePath, cssString);
+            }
+        } catch (e) {
+            console.error(e);
+        }
     }
 }
 
-// settings.map(setting => {
-//     return urlToCsv(setting.url)
-//         .then(csvToObj)
-//         .then(objToCSS)
-//         // .then(cssString => {
-//         //     return validateCss(cssString, setting);
-//         // })
-//         .then(cssString => {
-//             validateCss(cssString, setting);
-//             fs.writeFileSync(setting.filePath, cssString);
-//             return console.log(`Wrote ${setting.filePath}`);
-
-//         })
-
-//         .catch(console.err);
+main();
