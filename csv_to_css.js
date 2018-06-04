@@ -1,7 +1,6 @@
 const request = require('request');
 const dsv = require('d3-dsv');
 const fs = require('fs');
-const prompt = require('prompt');
 const validate = require('csstree-validator');
 const reporter = require('csstree-validator').reporters.json;
 // const cleanCSS = require('clean-css');
@@ -9,7 +8,7 @@ const reporter = require('csstree-validator').reporters.json;
 // read the settings from wherever they are
 function readSettings() {
 
-    // let fileObject = fs.readFile(/*'filepath */, utf8);
+    let fileObject = fs.readFile( /*'filepath */ , utf8);
 
     return [{
         'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
