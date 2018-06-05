@@ -2,21 +2,13 @@ const request = require('request');
 const dsv = require('d3-dsv');
 const fs = require('fs');
 const validate = require('csstree-validator');
-const reporter = require('csstree-validator').reporters.json;
-// const cleanCSS = require('clean-css');
+const reporter = validate.reporters.json;
+const cleanCSS = require('clean-css');
 
 // read the settings from wherever they are
 function readSettings() {
-
-    let fileObject = fs.readFile( /*'filepath */ , utf8);
-
-    return [{
-        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv',
-        'filePath': './style.css'
-    }, {
-        'url': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv',
-        'filePath': './cssfile.css'
-    }];
+    let fileObject = JSON.parse(fs.readFileSync('./settings.json', 'utf8'));
+    return fileObject;
 }
 
 // Read in csv file
@@ -64,16 +56,8 @@ function objToCSS(csvObj) {
 }
 
 // Validate the CSS string
-function validateCssAndErrorLog(cssString, path) {
-    // var cleanString = cssString.replace(/\s*/g, '').replace(/\n*/g, '');
+function validateCss(cssString, path) {
     let errors = reporter(validate.validateString(cssString, path));
-
-    if (JSON.parse(errors).length !== 0) {
-        console.log(`Invalid CSS in file ${path}`);
-        writeFile(`${path}_errors.json`, errors);
-    } else {
-        console.log(`Valid CSS in file ${path}`);
-    }
     return errors;
 }
 
@@ -83,17 +67,33 @@ function writeFile(path, fileGuts) {
     console.log(`${path} written`);
 }
 
+function minifyCSS(cssString) {
+    let output = new cleanCSS({
+        level: 2,
+    }).minify(cssString);
+    console.log('ERR: ' + output.errors);
+    console.log(`WARNINGS ${output.warnings}`);
+    console.log(output.stats);
+    console.log('MAP: ' + output.sourceMap);
+    return output.styles;
+}
+
 async function main() {
     let settings = readSettings();
     for (let i = 0; i < settings.length; i++) {
         try {
+            let fileName = settings[i].fileName;
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
             let cssString = objToCSS(cssObj);
-            let errors = validateCssAndErrorLog(cssString, settings[i].filePath);
+            let minify = minifyCSS(cssString);
+            let errors = validateCss(minify, fileName);
+            console.log(errors);
             // Write the CSS file if there are no errors
             if (JSON.parse(errors).length === 0) {
-                writeFile(settings[i].filePath, cssString);
+                writeFile(`${fileName}.css`, cssString);
+            } else {
+                writeFile(`${fileName}_errors.json`, errors);
             }
         } catch (e) {
             console.error(e);

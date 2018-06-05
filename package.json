@@ -9,7 +9,9 @@
     "fs": "^0.0.1-security",
     "request": "^2.87.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "clean-css": "^4.1.11"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
