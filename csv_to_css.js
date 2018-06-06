@@ -4,6 +4,7 @@ const fs = require('fs');
 const validate = require('csstree-validator');
 const reporter = validate.reporters.json;
 const cleanCSS = require('clean-css');
+const chalk = require('chalk');
 
 // read the settings from wherever they are
 function readSettings() {
@@ -61,21 +62,36 @@ function validateCss(cssString, path) {
     return errors;
 }
 
-// Write the validated CSS to the specified path
-function writeFile(path, fileGuts) {
-    fs.writeFileSync(path, fileGuts);
-    console.log(`${path} written`);
-}
-
-function minifyCSS(cssString) {
+// Minify the CSS file
+function minifyCSS(cssString, fileName) {
     let output = new cleanCSS({
         level: 2,
     }).minify(cssString);
-    console.log('ERR: ' + output.errors);
-    console.log(`WARNINGS ${output.warnings}`);
-    console.log(output.stats);
-    console.log('MAP: ' + output.sourceMap);
-    return output.styles;
+
+    // validate the minified file
+    let errors = validateCss(output.styles, fileName);
+
+    // If there are no errors, it will return the minified file
+    if (JSON.parse(errors).length === 0) {
+        return {
+            'output': output.styles,
+        };
+
+        // If there are validation errors it will return the errors.
+    } else {
+        console.log(chalk.redBright(`There was an error minifying ${fileName}`));
+        return {
+            'output': errors,
+            'valid': false
+        };
+    }
+}
+
+// Write the validated CSS to the specified path
+function writeFile(path, fileGuts) {
+    let color = path.includes('_errors') ? chalk.redBright : chalk.blue;
+    fs.writeFileSync(path, fileGuts);
+    console.log(color(`${path} written`));
 }
 
 async function main() {
@@ -86,17 +102,31 @@ async function main() {
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
             let cssString = objToCSS(cssObj);
-            let minify = minifyCSS(cssString);
-            let errors = validateCss(minify, fileName);
-            console.log(errors);
-            // Write the CSS file if there are no errors
+            let errors = validateCss(cssString, fileName);
+            let minify = {
+                'valid': true
+            };
+
+            // minify file and check validity
             if (JSON.parse(errors).length === 0) {
-                writeFile(`${fileName}.css`, cssString);
-            } else {
+                minify = minifyCSS(cssString, fileName);
+            }
+            console.log(`MINIFIED: ${minify}`);
+
+            /**
+             * If there were errors in the regular file, or errors when minifying the file, those errors will be written to ${fileName}_errors.json,
+             * and a log will be written informing the user to check that file for the errors. 
+             */
+            if (JSON.parse(errors).length !== 0 || minify.valid === false) {
                 writeFile(`${fileName}_errors.json`, errors);
+                if (minify.valid === false) writeFile(`${fileName}_errors.json`, minify.output);
+                console.log(chalk.redBright(`Check ${fileName}_errors.json for errors`));
+            } else {
+                writeFile(`${fileName}.css`, cssString);
+                writeFile(`${fileName}_mini.css`, minify);
             }
         } catch (e) {
-            console.error(e);
+            console.error(chalk.red(e));
         }
     }
 }
