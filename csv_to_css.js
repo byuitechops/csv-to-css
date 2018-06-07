@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const request = require('request');
 const dsv = require('d3-dsv');
 const fs = require('fs');
@@ -75,6 +77,7 @@ function minifyCSS(cssString, fileName) {
     if (JSON.parse(errors).length === 0) {
         return {
             'output': output.styles,
+            'valid': true
         };
 
         // If there are validation errors it will return the errors.
@@ -89,7 +92,7 @@ function minifyCSS(cssString, fileName) {
 
 // Write the validated CSS to the specified path
 function writeFile(path, fileGuts) {
-    let color = path.includes('_errors') ? chalk.redBright : chalk.blue;
+    let color = path.includes('_errors') ? chalk.magenta : chalk.blue;
     fs.writeFileSync(path, fileGuts);
     console.log(color(`${path} written`));
 }
@@ -111,7 +114,7 @@ async function main() {
             if (JSON.parse(errors).length === 0) {
                 minify = minifyCSS(cssString, fileName);
             }
-            console.log(`MINIFIED: ${minify}`);
+            console.log(`MINIFIED: ${minify.valid}`);
 
             /**
              * If there were errors in the regular file, or errors when minifying the file, those errors will be written to ${fileName}_errors.json,
@@ -120,10 +123,10 @@ async function main() {
             if (JSON.parse(errors).length !== 0 || minify.valid === false) {
                 writeFile(`${fileName}_errors.json`, errors);
                 if (minify.valid === false) writeFile(`${fileName}_errors.json`, minify.output);
-                console.log(chalk.redBright(`Check ${fileName}_errors.json for errors`));
+                console.log(chalk.magenta(`Check ${fileName}_errors.json for errors`));
             } else {
                 writeFile(`${fileName}.css`, cssString);
-                writeFile(`${fileName}_mini.css`, minify);
+                writeFile(`${fileName}_mini.css`, minify.output);
             }
         } catch (e) {
             console.error(chalk.red(e));

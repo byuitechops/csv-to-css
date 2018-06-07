@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "csv_to_css.js",
+  "bin": {
+    "csvToCss": "csv_to_css.js"
+  },
   "dependencies": {
     "csstree-validator": "^1.4.0",
     "d3-dsv": "^1.0.8",
