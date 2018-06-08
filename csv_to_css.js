@@ -7,10 +7,13 @@ const validate = require('csstree-validator');
 const reporter = validate.reporters.json;
 const cleanCSS = require('clean-css');
 const chalk = require('chalk');
+const md5 = require('md5');
+const path = require('path');
 
 // read the settings from wherever they are
-function readSettings() {
-    let fileObject = JSON.parse(fs.readFileSync('./settings.json', 'utf8'));
+function readSettings(dirPath) {
+    let things = path.resolve(__dirname, './settings.json');
+    let fileObject = JSON.parse(fs.readFileSync(dirPath + './settings.json', 'utf8'));
     return fileObject;
 }
 
@@ -97,14 +100,24 @@ function writeFile(path, fileGuts) {
     console.log(color(`${path} written`));
 }
 
+function crossVerify(cssString) {
+    let things = md5(cssString);
+    let file = md5(fs.readFileSync('./styles.css'));
+    console.log('NEW FILE: ' + things);
+    console.log('OLD FILE: ' + file);
+}
+
 async function main() {
-    let settings = readSettings();
+    let dirPath = path.resolve(__dirname, './csv-to-css');
+    let settings = readSettings(dirPath);
     for (let i = 0; i < settings.length; i++) {
         try {
+            console.log(path);
             let fileName = settings[i].fileName;
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
             let cssString = objToCSS(cssObj);
+            crossVerify(cssString);
             let errors = validateCss(cssString, fileName);
             let minify = {
                 'valid': true
@@ -114,7 +127,6 @@ async function main() {
             if (JSON.parse(errors).length === 0) {
                 minify = minifyCSS(cssString, fileName);
             }
-            console.log(`MINIFIED: ${minify.valid}`);
 
             /**
              * If there were errors in the regular file, or errors when minifying the file, those errors will be written to ${fileName}_errors.json,
@@ -135,3 +147,10 @@ async function main() {
 }
 
 main();
+
+/**
+ * Compare minified hash to the hash saved in settings. 
+ * If the hash is the same, do nothing.
+ * If there is no hash, or they are different, update the file, and add the hash to the ./settings.json file
+ * Once everything has been looped through, write the settings file to the HD. 
+ */

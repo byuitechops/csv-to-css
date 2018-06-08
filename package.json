@@ -10,6 +10,7 @@
     "csstree-validator": "^1.4.0",
     "d3-dsv": "^1.0.8",
     "fs": "^0.0.1-security",
+    "md5": "^2.2.1",
     "request": "^2.87.0"
   },
   "devDependencies": {
