@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+/*eslint linebreak-style: [0]*/
+
+
 const request = require('request');
 const dsv = require('d3-dsv');
 const fs = require('fs');
@@ -12,8 +15,7 @@ const path = require('path');
 
 // read the settings from wherever they are
 function readSettings(dirPath) {
-    // let things = path.resolve(__dirname, './settings.json');
-    let fileObject = JSON.parse(fs.readFileSync(dirPath + 'settings.json', 'utf8'));
+    let fileObject = JSON.parse(fs.readFileSync(dirPath + '/settings.json', 'utf8'));
     return fileObject;
 }
 
@@ -67,7 +69,11 @@ function validateCss(cssString, path) {
     return errors;
 }
 
-// Minify the CSS file
+/**
+ * Minify the CSS file
+ * @param {string} cssString 
+ * @param {string} fileName 
+ */
 function minifyCSS(cssString, fileName) {
     let output = new cleanCSS({
         level: 2,
@@ -93,22 +99,36 @@ function minifyCSS(cssString, fileName) {
     }
 }
 
-// Write the validated CSS to the specified path
+/**
+ * Write the validated CSS to the specified path
+ * @param {string} path 
+ * @param {string} fileGuts Stuff to be written
+ */
 function writeFile(path, fileGuts) {
     let color = path.includes('_errors') ? chalk.magenta : chalk.blue;
     fs.writeFileSync(path, fileGuts);
     console.log(color(`${path} written`));
 }
 
-function crossVerify(cssString) {
-    let things = md5(cssString);
-    let file = md5(fs.readFileSync('./styles.css'));
-    console.log('NEW FILE: ' + things);
-    console.log('OLD FILE: ' + file);
+/**
+ * Verify if the file needs to be updated by checking the hash
+ * of the minified file.  
+ * If `${setting[i].hash}` is `null` or is different than `${setting[i].hash]}` write the new file.
+ * @param {string} minifiedFile 
+ * @param {JSON} setting 
+ */
+function crossVerify(minifiedFile, setting) {
+    let toVerify = md5(minifiedFile);
+    console.log(`NEW: ${toVerify}`);
+    if (setting.hash === null || setting.hash !== toVerify) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 async function main() {
-    let dirPath = path.resolve(__dirname, './csv-to-css');
+    let dirPath = path.resolve(__dirname);
     let settings = readSettings(dirPath);
     for (let i = 0; i < settings.length; i++) {
         try {
@@ -117,7 +137,7 @@ async function main() {
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
             let cssString = objToCSS(cssObj);
-            crossVerify(cssString);
+            fs.writeFileSync(`weird${i}.txt`, cssString);
             let errors = validateCss(cssString, fileName);
             let minify = {
                 'valid': true
@@ -126,6 +146,11 @@ async function main() {
             // minify file and check validity
             if (JSON.parse(errors).length === 0) {
                 minify = minifyCSS(cssString, fileName);
+            }
+
+            // verify if the file has been changed. If it has, finish the function. If not skip to the next iteration.
+            if (crossVerify(minify, settings[i]) === false) {
+                continue;
             }
 
             /**
@@ -139,18 +164,14 @@ async function main() {
             } else {
                 writeFile(`${fileName}.css`, cssString);
                 writeFile(`${fileName}_mini.css`, minify.output);
+                settings[i].hash = md5(minify);
             }
         } catch (e) {
             console.error(chalk.red(e));
         }
     }
+    fs.writeFileSync(__dirname + '/settings.json', JSON.stringify(settings));
+    console.log(settings);
 }
 
 main();
-
-/**
- * Compare minified hash to the hash saved in settings. 
- * If the hash is the same, do nothing.
- * If there is no hash, or they are different, update the file, and add the hash to the ./settings.json file
- * Once everything has been looped through, write the settings file to the HD. 
- */
