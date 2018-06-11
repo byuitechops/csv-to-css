@@ -1,4 +1,4 @@
-// #!/usr/bin/env node
+#!/usr/bin/env node
 
 const request = require('request');
 const dsv = require('d3-dsv');
