@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
 
 const request = require('request');
 const dsv = require('d3-dsv');
@@ -12,8 +12,8 @@ const path = require('path');
 
 // read the settings from wherever they are
 function readSettings(dirPath) {
-    let things = path.resolve(__dirname, './settings.json');
-    let fileObject = JSON.parse(fs.readFileSync(dirPath + './settings.json', 'utf8'));
+    // let things = path.resolve(__dirname, './settings.json');
+    let fileObject = JSON.parse(fs.readFileSync(dirPath + 'settings.json', 'utf8'));
     return fileObject;
 }
 
@@ -112,7 +112,7 @@ async function main() {
     let settings = readSettings(dirPath);
     for (let i = 0; i < settings.length; i++) {
         try {
-            console.log(path);
+            // console.log(path);
             let fileName = settings[i].fileName;
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
