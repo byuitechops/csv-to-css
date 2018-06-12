@@ -12,10 +12,12 @@ const cleanCSS = require('clean-css');
 const chalk = require('chalk');
 const md5 = require('md5');
 const path = require('path');
+let settingsHash;
 
 // read the settings from wherever they are
 function readSettings(dirPath) {
     let fileObject = JSON.parse(fs.readFileSync(dirPath + '/settings.json', 'utf8'));
+    settingsHash = md5(fileObject);
     return fileObject;
 }
 
@@ -106,30 +108,27 @@ function minifyCSS(cssString, fileName) {
  */
 function writeFile(path, fileGuts) {
     let color = path.includes('_errors') ? chalk.magenta : chalk.blue;
-    fs.writeFileSync(path, fileGuts);
+    try {
+        fs.writeFileSync(path, fileGuts);
+    } catch (e) {
+        errorHandling(e);
+    }
     console.log(color(`${path} written`));
 }
 
-/**
- * Verify if the file needs to be updated by checking the hash
- * of the minified file.  
- * If `${setting[i].hash}` is `null` or is different than `${setting[i].hash]}` write the new file.
- * @param {string} minifiedFile 
- * @param {JSON} setting 
- */
-function crossVerify(minifiedFile, setting) {
-    let toVerify = md5(minifiedFile);
-    console.log(`NEW: ${toVerify}`);
-    if (setting.hash === null || setting.hash !== toVerify) {
-        return true;
-    } else {
-        return false;
-    }
+function cssFileError(errorFile, errors) {
+    writeFile(errorFile, errors);
+    console.log(chalk.magenta(`Check ${errorFile} for errors`));
+}
+
+function errorHandling(err) {
+    console.error(err.stack);
 }
 
 async function main() {
     let dirPath = path.resolve(__dirname);
     let settings = readSettings(dirPath);
+
     for (let i = 0; i < settings.length; i++) {
         try {
             // console.log(path);
@@ -137,41 +136,48 @@ async function main() {
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
             let cssString = objToCSS(cssObj);
-            fs.writeFileSync(`weird${i}.txt`, cssString);
+            try {
+                fs.writeFileSync(`File${i}.txt`, cssString);
+            } catch (e) {
+                errorHandling(e);
+            }
             let errors = validateCss(cssString, fileName);
+            let errorFile = `${fileName}_errors.json`;
+            let newHash;
             let minify = {
                 'valid': true
             };
 
-            // minify file and check validity
-            if (JSON.parse(errors).length === 0) {
-                minify = minifyCSS(cssString, fileName);
-            }
-
-            // verify if the file has been changed. If it has, finish the function. If not skip to the next iteration.
-            if (crossVerify(minify, settings[i]) === false) {
-                continue;
-            }
-
-            /**
-             * If there were errors in the regular file, or errors when minifying the file, those errors will be written to ${fileName}_errors.json,
-             * and a log will be written informing the user to check that file for the errors. 
-             */
-            if (JSON.parse(errors).length !== 0 || minify.valid === false) {
-                writeFile(`${fileName}_errors.json`, errors);
-                if (minify.valid === false) writeFile(`${fileName}_errors.json`, minify.output);
-                console.log(chalk.magenta(`Check ${fileName}_errors.json for errors`));
+            // If there are errors send to errorHandling function
+            if (JSON.parse(errors).length !== 0) {
+                cssFileError(errorFile, errors);
             } else {
-                writeFile(`${fileName}.css`, cssString);
-                writeFile(`${fileName}_mini.css`, minify.output);
-                settings[i].hash = md5(minify);
+                minify = minifyCSS(cssString, fileName);
+                if (minify.valid === false) {
+                    cssFileError(errorFile, minify.output);
+                } else {
+                    newHash = md5(minify.output);
+                    if (newHash !== settings[i].hash) {
+                        writeFile(`${fileName}.css`, cssString);
+                        writeFile(`${fileName}_mini.css`, minify.output);
+                        settings[i].hash = newHash;
+                    }
+                }
             }
         } catch (e) {
-            console.error(chalk.red(e));
+            errorHandling(e);
         }
     }
-    fs.writeFileSync(__dirname + '/settings.json', JSON.stringify(settings));
-    console.log(settings);
+    if (settingsHash !== md5(settings)) {
+        try {
+            fs.writeFileSync(`${__dirname}/settings.json`, JSON.stringify(settings, null, 4));
+        } catch (e) {
+            errorHandling(e);
+        }
+        console.log(chalk.green('Settings updated'));
+    } else {
+        console.log(chalk.green('Nothing changed'));
+    }
 }
 
 main();
