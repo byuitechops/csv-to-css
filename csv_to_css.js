@@ -15,8 +15,18 @@ const path = require('path');
 let settingsHash;
 
 // read the settings from wherever they are
+
+// md5 needs non-parsed json to work. 
+// 1. pass in object to readSettings including settingsHash
+// 2. do it in two parts
+
 function readSettings(dirPath) {
-    let fileObject = JSON.parse(fs.readFileSync(dirPath + '/settings.json', 'utf8'));
+    let fileObject;
+    try {
+        fileObject = fs.readFileSync(dirPath + '/settings.json', 'utf8');
+    } catch (e) {
+        errorHandling(e);
+    }
     settingsHash = md5(fileObject);
     return fileObject;
 }
@@ -68,7 +78,13 @@ function objToCSS(csvObj) {
 // Validate the CSS string
 function validateCss(cssString, path) {
     let errors = reporter(validate.validateString(cssString, path));
-    return errors;
+    let parsedErrors;
+    try {
+        parsedErrors = JSON.parse(errors);
+    } catch (e) {
+        errorHandling(e);
+    }
+    return parsedErrors;
 }
 
 /**
@@ -85,7 +101,7 @@ function minifyCSS(cssString, fileName) {
     let errors = validateCss(output.styles, fileName);
 
     // If there are no errors, it will return the minified file
-    if (JSON.parse(errors).length === 0) {
+    if (errors.length === 0) {
         return {
             'output': output.styles,
             'valid': true
@@ -116,11 +132,20 @@ function writeFile(path, fileGuts) {
     console.log(color(`${path} written`));
 }
 
+/**
+ * Write errors in CSS code to errors file
+ * @param {File} errorFile 
+ * @param {Object} errors 
+ */
 function cssFileError(errorFile, errors) {
     writeFile(errorFile, errors);
     console.log(chalk.magenta(`Check ${errorFile} for errors`));
 }
 
+/**
+ * Handle errors when running
+ * @param {Error} err 
+ */
 function errorHandling(err) {
     console.error(err.stack);
 }
@@ -149,7 +174,7 @@ async function main() {
             };
 
             // If there are errors send to errorHandling function
-            if (JSON.parse(errors).length !== 0) {
+            if (errors.length !== 0) {
                 cssFileError(errorFile, errors);
             } else {
                 minify = minifyCSS(cssString, fileName);
