@@ -20,18 +20,26 @@ let settingsHash;
 // 1. pass in object to readSettings including settingsHash
 // 2. do it in two parts
 
+/**
+ * 
+ * @param {string} dirPath 
+ */
 function readSettings(dirPath) {
     let fileObject;
     try {
         fileObject = fs.readFileSync(dirPath + '/settings.json', 'utf8');
-    } catch (e) {
-        errorHandling(e);
+        settingsHash = md5(fileObject);
+        fileObject = JSON.parse(fileObject);
+    } catch (err) {
+        errorHandling(err);
     }
-    settingsHash = md5(fileObject);
     return fileObject;
 }
 
-// Read in csv file
+/**
+ * 
+ * @param {string} url 
+ */
 function urlToCsv(url) {
     return new Promise((resolve, reject) => {
         var options = {
@@ -40,19 +48,25 @@ function urlToCsv(url) {
         };
 
         request(options, (err, response, body) => {
-            if (err) return reject(err);
+            if (err) return reject(errorHandling(err));
             resolve(body);
         });
     });
 }
 
-// Format csv to js obj
+/**
+ * Format csv to javascript obj
+ * @param {string} csvString 
+ */
 function csvToObj(csvString) {
     var csvObj = dsv.csvParse(csvString);
     return csvObj;
 }
 
-// change the js object to correctly formatted css.
+/**
+ * change the js object to correctly formatted css.
+ * @param {object} csvObj 
+ */
 function objToCSS(csvObj) {
     var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
     var cssTags = csvObj.columns.filter(column => column.substr(0, 2) === '--');
@@ -75,14 +89,18 @@ function objToCSS(csvObj) {
     return cssStrings.filter(str => str !== null).join('\n');
 }
 
-// Validate the CSS string
+/**
+ * change the js object to correctly formatted css.
+ * @param {string} cssString 
+ * @param {string} path 
+ */
 function validateCss(cssString, path) {
     let errors = reporter(validate.validateString(cssString, path));
     let parsedErrors;
     try {
         parsedErrors = JSON.parse(errors);
-    } catch (e) {
-        errorHandling(e);
+    } catch (err) {
+        errorHandling(err);
     }
     return parsedErrors;
 }
@@ -126,8 +144,8 @@ function writeFile(path, fileGuts) {
     let color = path.includes('_errors') ? chalk.magenta : chalk.blue;
     try {
         fs.writeFileSync(path, fileGuts);
-    } catch (e) {
-        errorHandling(e);
+    } catch (err) {
+        errorHandling(err);
     }
     console.log(color(`${path} written`));
 }
@@ -138,7 +156,11 @@ function writeFile(path, fileGuts) {
  * @param {Object} errors 
  */
 function cssFileError(errorFile, errors) {
-    writeFile(errorFile, errors);
+    try {
+    writeFile(errorFile, JSON.stringify(errors, null, 4));
+    } catch(err) {
+        errorHandling(err);
+    }
     console.log(chalk.magenta(`Check ${errorFile} for errors`));
 }
 
@@ -153,6 +175,7 @@ function errorHandling(err) {
 async function main() {
     let dirPath = path.resolve(__dirname);
     let settings = readSettings(dirPath);
+    let formattedSettings;
 
     for (let i = 0; i < settings.length; i++) {
         try {
@@ -161,11 +184,6 @@ async function main() {
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
             let cssString = objToCSS(cssObj);
-            try {
-                fs.writeFileSync(`File${i}.txt`, cssString);
-            } catch (e) {
-                errorHandling(e);
-            }
             let errors = validateCss(cssString, fileName);
             let errorFile = `${fileName}_errors.json`;
             let newHash;
@@ -189,15 +207,22 @@ async function main() {
                     }
                 }
             }
-        } catch (e) {
-            errorHandling(e);
+        } catch (err) {
+            errorHandling(err);
         }
     }
-    if (settingsHash !== md5(settings)) {
+    try {
+        formattedSettings = JSON.stringify(settings, null, 4);
+    } catch(err) {
+        errorHandling(err);
+    }
+    console.log(settingsHash);
+    console.log(md5(formattedSettings));
+    if (settingsHash !== md5(formattedSettings)) {
         try {
-            fs.writeFileSync(`${__dirname}/settings.json`, JSON.stringify(settings, null, 4));
-        } catch (e) {
-            errorHandling(e);
+            fs.writeFileSync(`${__dirname}/settings.json`, formattedSettings);
+        } catch (err) {
+            errorHandling(err);
         }
         console.log(chalk.green('Settings updated'));
     } else {
