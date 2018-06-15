@@ -12,6 +12,8 @@ const cleanCSS = require('clean-css');
 const chalk = require('chalk');
 const md5 = require('md5');
 const path = require('path');
+const date = new Date();
+const dateUpdated = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`
 let settingsHash;
 
 // read the settings from wherever they are
@@ -97,9 +99,11 @@ function objToCSS(csvObj) {
         let error = null;
 
         if (row.courseCode) {
-            let isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(row.courseCode);
+            let courseCode = row.courseCode;
+            let isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(courseCode);
             if (!isValidCourseCode) {
-                error = makeValidateError('Invalid course code', rowIndex);
+                error = makeValidateError(`${courseCode}: Invalid course code`, rowIndex);
+                console.error(`${courseCode} is not a valid Course Code`)
             }
         } else {
             error = makeValidateError('There is no course code', rowIndex);
@@ -133,22 +137,23 @@ function objToCSS(csvObj) {
         if (errors.length > 0) {
             //add errors to the acc.err
             acc.err.push(errors);
-        } else {
-            // create the css string 
-            var metaData = '/*' + toKeyVals(row, metaDataTags) + '\n*/';
-            var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
-            // Skip the blank css rows
-            if (cssData !== '. {\n}') {
-                // add it to acc.css
-                acc.css += `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
-            }
+        }
+        // else {
+        // create the css string 
+        var metaData = '/*' + toKeyVals(row, metaDataTags) + '\n*/';
+        var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
+        // Skip the blank css rows
+        if (cssData !== '. {\n}') {
+            // add it to acc.css
+            acc.css += `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
+            // }
         }
 
         return acc;
     }, {
-        css: '',
-        err: []
-    });
+            css: '',
+            err: []
+        });
 
     return cssObjOut;
 }
@@ -160,13 +165,16 @@ function objToCSS(csvObj) {
  * @param {string} path 
  */
 function validateCss(cssString, path) {
-    let errors = reporter(validate.validateString(cssString, path));
-    console.log(errors);
+    let errors = reporter(validate.validateString(cssString.css, path));
     let parsedErrors;
     try {
         parsedErrors = JSON.parse(errors);
     } catch (err) {
         errorHandling(err);
+    }
+    if (cssString.err && cssString.err.length > 0) {
+        parsedErrors.push(cssString.err);
+        console.log('course code errors', cssString.err);
     }
     return parsedErrors;
 }
@@ -183,7 +191,6 @@ function minifyCSS(cssString, fileName) {
 
     // validate the minified file
     let errors = validateCss(output.styles, fileName);
-    console.log(errors);
 
     // If there are no errors, it will return the minified file
     if (errors.length === 0) {
@@ -250,10 +257,9 @@ async function main() {
             let fileName = settings[i].fileName;
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
-            let cssString = objToCSS(cssObj);
-            let errors = validateCss(cssString.css, fileName);
-            // if (cssString.err.length > 0) errors = cssString.err;
-            let errorFile = `${fileName}_errors.json`;
+            let cssFinalObj = objToCSS(cssObj);
+            let errors = validateCss(cssFinalObj, fileName);
+            let errorFile = `${fileName}_errors_${dateUpdated}.json`;
             let newHash;
             let minify = {
                 'valid': true
@@ -261,16 +267,21 @@ async function main() {
 
             // If there are errors send to errorHandling function
             if (errors.length !== 0) {
-                cssFileError(errorFile, errors);
+                try {
+                    cssFileError(errorFile, errors);
+                    writeFile(`${fileName}_invalid_${dateUpdated}.css`, cssFinalObj.css);
+                } catch (err) {
+                    errorHandling(err);
+                }
             } else {
-                minify = minifyCSS(cssString.css, fileName);
+                minify = minifyCSS(cssFinalObj.css, fileName);
                 if (minify.valid === false) {
                     cssFileError(errorFile, minify.output);
                 } else {
                     newHash = md5(minify.output);
                     if (newHash !== settings[i].hash) {
-                        writeFile(`${fileName}.css`, cssString.css);
-                        writeFile(`${fileName}_mini.css`, minify.output);
+                        writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObj.css);
+                        writeFile(`${fileName}_${dateUpdated}.css`, minify.output);
                         settings[i].hash = newHash;
                     }
                 }
