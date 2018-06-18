@@ -73,6 +73,9 @@ function csvToObj(csvString) {
                 .replace(/\s/g, '')
                 .toLowerCase();
         }
+        if (row.department) {
+            console.log(row.department);
+        }
         return row;
     });
     return csvObj;
@@ -85,7 +88,7 @@ function csvToObj(csvString) {
 function objToCSS(csvObj) {
     var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
     var cssTags = csvObj.columns.filter(column => column.substr(0, 2) === '--');
-
+    let department;
 
     function makeValidateError(message, rowIndex, data) {
         return {
@@ -102,18 +105,18 @@ function objToCSS(csvObj) {
             let courseCode = row.courseCode;
             let isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(courseCode);
             if (!isValidCourseCode) {
-                error = makeValidateError(`${courseCode}: Invalid course code`, rowIndex);
+                error = makeValidateError(`${courseCode}: Invalid course code`, rowIndex, row);
                 console.error(`${courseCode} is not a valid Course Code`)
             }
         } else {
-            error = makeValidateError('There is no course code', rowIndex);
+            error = makeValidateError('There is no course code', rowIndex, row);
         }
         return error; //what it returns
     }
 
     function verifyRow(row, rowIndex) {
         let errors = [
-            verifyCourseCode(row, rowIndex)
+            verifyCourseCode(row, rowIndex),
         ];
 
         return errors.filter(e => e !== null);
@@ -128,8 +131,18 @@ function objToCSS(csvObj) {
         }, '');
     }
 
+    function createCssStringAndObject(department, row, err) {
 
+        return
+    }
     let cssObjOut = csvObj.reduce((acc, row, rowIndex) => {
+
+        /**
+         * Potential change to handle departments:
+         *  A different function to create the css string.
+         *  inside that function have the course code declared and added to the object.
+         *  Return the object, and add that to the acc array.
+         */
 
         // Verify that the row has the correct parts/is valid
         let errors = verifyRow(row, rowIndex);
@@ -150,10 +163,11 @@ function objToCSS(csvObj) {
         }
 
         return acc;
-    }, {
-            css: '',
-            err: []
-        });
+    }, [{
+        dept: '',
+        css: '',
+        err: []
+    }]);
 
     return cssObjOut;
 }
@@ -174,7 +188,6 @@ function validateCss(cssString, path) {
     }
     if (cssString.err && cssString.err.length > 0) {
         parsedErrors.push(cssString.err);
-        console.log('course code errors', cssString.err);
     }
     return parsedErrors;
 }
@@ -269,7 +282,6 @@ async function main() {
             if (errors.length !== 0) {
                 try {
                     cssFileError(errorFile, errors);
-                    writeFile(`${fileName}_invalid_${dateUpdated}.css`, cssFinalObj.css);
                 } catch (err) {
                     errorHandling(err);
                 }
