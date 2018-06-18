@@ -41,19 +41,19 @@ Input the URL for the published google sheet where your csv data is.
 ```json
 [
     {
-        "url": "https://www.g",
+        "url": "https://www.google.com",
         "fileName": "styles",
-        "hash": "486e7e2ccdb15f36dcc2ddecb354f7ae"
+        "hash": null
     },
     {
-        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv",
+        "url": "https://docs.google.com/spreadsheets/validresource",
         "fileName": "cssfile",
         "hash": null
     },
     {
-        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0AML_IbiwbQQq2AzniXDXwC3OW3Nbx8ErozNc5YBKQrwNfaVKzfU3in6UHxYL71eRGIU1k9riRVwD/pub?gid=0&single=true&output=csv",
+        "url": "https://docs.google.com/spreadsheets/othervalidthings",
         "fileName": "campus",
-        "hash": "f9ac5f6b81186ce6860c278a2eae4de6"
+        "hash": null
     }
 ]
 ```
