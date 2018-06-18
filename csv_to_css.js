@@ -73,9 +73,6 @@ function csvToObj(csvString) {
                 .replace(/\s/g, '')
                 .toLowerCase();
         }
-        if (row.department) {
-            console.log(row.department);
-        }
         return row;
     });
     return csvObj;
@@ -119,6 +116,8 @@ function objToCSS(csvObj) {
             verifyCourseCode(row, rowIndex),
         ];
 
+        department = row.department ? row.department : null;
+
         return errors.filter(e => e !== null);
     }
 
@@ -132,9 +131,25 @@ function objToCSS(csvObj) {
     }
 
     function createCssStringAndObject(department, row, err) {
+        let returnedObj = {
+            department,
+            css: '',
+            err: []
+        }
+        if (err.length > 0) {
+            //add errors to the acc.err
+            returnedObj.err = err;
+        }
 
-        return
+        var metaData = '/*' + toKeyVals(row, metaDataTags) + '\n*/';
+        var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
+
+        if (cssData !== '. {\n}') {
+            returnedObj.css = `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
+        }
+        return returnedObj;
     }
+
     let cssObjOut = csvObj.reduce((acc, row, rowIndex) => {
 
         /**
@@ -144,30 +159,35 @@ function objToCSS(csvObj) {
          *  Return the object, and add that to the acc array.
          */
 
+
+
         // Verify that the row has the correct parts/is valid
         let errors = verifyRow(row, rowIndex);
+
+
+        let things = createCssStringAndObject(department, row, errors);
+        console.log(things);
+        acc.push(things);
+
+
         // Check for errors 
-        if (errors.length > 0) {
-            //add errors to the acc.err
-            acc.err.push(errors);
-        }
-        // else {
-        // create the css string 
-        var metaData = '/*' + toKeyVals(row, metaDataTags) + '\n*/';
-        var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
-        // Skip the blank css rows
-        if (cssData !== '. {\n}') {
-            // add it to acc.css
-            acc.css += `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
-            // }
-        }
+        // if (errors.length > 0) {
+        //     //add errors to the acc.err
+        //     acc.err.push(errors);
+        // }
+        // // else {
+        // // create the css string 
+        // var metaData = '/*' + toKeyVals(row, metaDataTags) + '\n*/';
+        // var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
+        // // Skip the blank css rows
+        // if (cssData !== '. {\n}') {
+        //     // add it to acc.css
+        //     acc.css += `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
+        //     // }
+        // }
 
         return acc;
-    }, [{
-        dept: '',
-        css: '',
-        err: []
-    }]);
+    }, []);
 
     return cssObjOut;
 }
@@ -270,8 +290,10 @@ async function main() {
             let fileName = settings[i].fileName;
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
-            let cssFinalObj = objToCSS(cssObj);
-            let errors = validateCss(cssFinalObj, fileName);
+            let cssFinalObjects = objToCSS(cssObj); // An array of objects. 1 object per row.
+            console.log(`This is the Array/Object of power ${cssFinalObjects}`);
+
+            let errors = validateCss(cssFinalObjects[1], fileName);
             let errorFile = `${fileName}_errors_${dateUpdated}.json`;
             let newHash;
             let minify = {
@@ -286,13 +308,13 @@ async function main() {
                     errorHandling(err);
                 }
             } else {
-                minify = minifyCSS(cssFinalObj.css, fileName);
+                minify = minifyCSS(cssFinalObjects[1].css, fileName);
                 if (minify.valid === false) {
                     cssFileError(errorFile, minify.output);
                 } else {
                     newHash = md5(minify.output);
                     if (newHash !== settings[i].hash) {
-                        writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObj.css);
+                        writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[1].css);
                         writeFile(`${fileName}_${dateUpdated}.css`, minify.output);
                         settings[i].hash = newHash;
                     }
