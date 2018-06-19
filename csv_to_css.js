@@ -13,7 +13,7 @@ const chalk = require('chalk');
 const md5 = require('md5');
 const path = require('path');
 const date = new Date();
-const dateUpdated = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`
+const dateUpdated = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
 let settingsHash;
 
 // read the settings from wherever they are
@@ -61,10 +61,14 @@ function urlToCsv(url) {
  * @param {string} csvString 
  */
 function csvToObj(csvString) {
-    var csvObj = dsv.csvParse(csvString, (row) => {
+    let requiredValues = [];
+    let csvObj = dsv.csvParse(csvString, (row) => {
         // Trim all values
         for (let key in row) {
             row[key] = row[key].trim();
+            if (!(key.includes('@') || key.includes('--')) && row[key] !== '') {
+                requiredValues.push(`${key}: ${row[key]}`);
+            }
         }
 
         // Remove all spaces and lowercase all letters in course code
@@ -73,8 +77,13 @@ function csvToObj(csvString) {
                 .replace(/\s/g, '')
                 .toLowerCase();
         }
+
+
+
         return row;
     });
+
+    console.log(requiredValues);
     return csvObj;
 }
 
@@ -103,7 +112,7 @@ function objToCSS(csvObj) {
             let isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(courseCode);
             if (!isValidCourseCode) {
                 error = makeValidateError(`${courseCode}: Invalid course code`, rowIndex, row);
-                console.error(`${courseCode} is not a valid Course Code`)
+                console.error(`${courseCode} is not a valid Course Code`);
             }
         } else {
             error = makeValidateError('There is no course code', rowIndex, row);
@@ -135,7 +144,7 @@ function objToCSS(csvObj) {
             department,
             css: '',
             err: []
-        }
+        };
         if (err.length > 0) {
             //add errors to the acc.err
             returnedObj.err = err;
@@ -166,7 +175,7 @@ function objToCSS(csvObj) {
 
 
         let things = createCssStringAndObject(department, row, errors);
-        console.log(things);
+        // console.log(things);
         acc.push(things);
 
 
@@ -291,7 +300,7 @@ async function main() {
             let csvString = await urlToCsv(settings[i].url);
             let cssObj = csvToObj(csvString);
             let cssFinalObjects = objToCSS(cssObj); // An array of objects. 1 object per row.
-            console.log(`This is the Array/Object of power ${cssFinalObjects}`);
+            // console.log(`This is the Array/Object of power ${cssFinalObjects}`);
 
             let errors = validateCss(cssFinalObjects[1], fileName);
             let errorFile = `${fileName}_errors_${dateUpdated}.json`;
