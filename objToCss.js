@@ -3,8 +3,11 @@
  * @param {object} csvObj 
  */
 function objToCSS(csvObj) {
+    let keysToKeep = ['courseCode', 'department', 'customCSS'];
+
     var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
     var cssTags = csvObj.columns.filter(column => column.substr(0, 2) === '--');
+    let departmentObject;
     let department;
 
     function makeValidateError(message, rowIndex, data) {
@@ -50,10 +53,10 @@ function objToCSS(csvObj) {
         }, '');
     }
 
-    function createCssString(row) {
+    function createCssString(row, metaData, cssData) {
 
-        var metaData = '/*' + toKeyVals(row, metaDataTags) + '\n*/';
-        var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
+        var metaData = '/*' + toKeyVals(row, metaData) + '\n*/';
+        var cssData = `.${row.courseCode} {` + toKeyVals(row, cssData) + '\n}';
 
         if (cssData !== '. {\n}') {
             return `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
@@ -61,56 +64,64 @@ function objToCSS(csvObj) {
         return;
     }
 
-    function createReturnObject(department, css, errors) {
-        let returnedObj = {
-            department,
-            css,
-            'errors': errors ? errors : null
-        };
+    /**
+     * Seperate the keys to keep from the rest
+     * @param {Object} row 
+     */
+    function seperateKeysToKeep(row) {
+        let keysNotIncludingKeepers = Object.keys(row).reduce((acc, key) => {
+            if (!keysToKeep.includes(key) && row[key] !== '') {
+                acc[key] = row[key];
+            }
+            return acc;
+        }, {});
 
-        return returnedObj;
+        return keysNotIncludingKeepers;
+    }
+
+    function seperateMetaFromCSS(cssObj) {
+        let sortedObject = Object.keys(cssObj).reduce((sorted, key) => {
+            let list = 'meta';
+
+            if (!key.includes('@')) {
+                list = 'css';
+            };
+
+            sorted[list].push(key);
+            // console.log(sorted);
+            return sorted;
+        }, {
+                'meta': [],
+                'css': []
+            });
+        return sortedObject;
     }
 
     let cssObjOut = csvObj.reduce((acc, row, rowIndex) => {
+        let department = row.department ? row.department : null;
+        if (department === null) {
 
-        /**
-         * Potential change to handle departments:
-         *  A different function to create the css string.
-         *  inside that function have the course code declared and added to the object.
-         *  Return the object, and add that to the acc array.
-         */
-
-
+        }
 
         // Verify that the row has the correct parts/is valid
         let errors = verifyRow(row, rowIndex);
+        let seperatedKeys = seperateKeysToKeep(row);
 
+        let metaDataAndCssObj = seperateMetaFromCSS(seperatedKeys);
+        let cssString = createCssString(row, metaDataAndCssObj.meta, metaDataAndCssObj.css);
 
-        let cssString = createCssString(row);
-        let objectToReturn = createReturnObject(department, cssString, errors);
 
         // console.log(things);
-        acc.push(objectToReturn);
-
-
-        // Check for errors 
-        // if (errors.length > 0) {
-        //     //add errors to the acc.err
-        //     acc.err.push(errors);
-        // }
-        // // else {
-        // // create the css string 
-        // var metaData = '/*' + toKeyVals(row, metaDataTags) + '\n*/';
-        // var cssData = `.${row.courseCode} {` + toKeyVals(row, cssTags) + '\n}';
-        // // Skip the blank css rows
-        // if (cssData !== '. {\n}') {
-        //     // add it to acc.css
-        //     acc.css += `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
-        //     // }
-        // }
+        // acc.push(objectToReturn);
+        // if (department !== null) {
+        if (acc[department]) {
+            acc[department] += cssString;
+        } else {
+            acc[department] = cssString;
+        }
 
         return acc;
-    }, []);
+    }, {});
 
     return cssObjOut;
 }

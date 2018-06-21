@@ -63,15 +63,10 @@ function urlToCsv(url) {
  * @param {string} csvString 
  */
 function csvToObj(csvString) {
-    let requiredValues = [];
     let csvObj = dsv.csvParse(csvString, (row) => {
         // Trim all values
         for (let key in row) {
             row[key] = row[key].trim();
-            if (!(key.includes('@') || key.includes('--')) && row[key] !== '') {
-                requiredValues.push(`{${key}: ${row[key]}}`);
-                delete row[key];
-            }
         }
 
         // Remove all spaces and lowercase all letters in course code
@@ -83,11 +78,7 @@ function csvToObj(csvString) {
 
         return row;
     });
-    console.log(csvObj)
-    return {
-        csvObj,
-        requiredValues
-    };
+    return csvObj;
 }
 
 /**
@@ -96,7 +87,7 @@ function csvToObj(csvString) {
  * @param {string} path 
  */
 function validateCss(cssString, path) {
-    let errors = reporter(validate.validateString(cssString.css, path));
+    let errors = reporter(validate.validateString(cssString, path));
     let parsedErrors;
     try {
         parsedErrors = JSON.parse(errors);
@@ -184,38 +175,40 @@ async function main() {
     for (let i = 0; i < settings.length; i++) {
         try {
             // console.log(path);
-            let fileName = settings[i].fileName;
             let csvString = await urlToCsv(settings[i].url);
-            let cssObj = csvToObj(csvString);
-            let cssFinalObjects = objToCss(cssObj.csvObj); // An array of objects. 1 object per row.
+            let csvObj = csvToObj(csvString);
+            let cssFinalObjects = objToCss(csvObj);
 
-            let errors = validateCss(cssFinalObjects[1], fileName);
-            let errorFile = `${fileName}_errors_${dateUpdated}.json`;
-            let newHash;
-            let minify = {
-                'valid': true
-            };
+            Object.keys(cssFinalObjects).forEach(department => {
+                let fileName = department.replace(/\s/g, '_');
+                let errors = validateCss(cssFinalObjects[department], fileName);
+                let errorFile = `${department}_errors_${dateUpdated}.json`;
+                let newHash;
+                let minify = {
+                    'valid': true
+                };
 
-            // If there are errors send to errorHandling function
-            if (errors.length !== 0) {
-                try {
-                    cssFileError(errorFile, errors);
-                } catch (err) {
-                    errorHandling(err);
-                }
-            } else {
-                minify = minifyCSS(cssFinalObjects[1].css, fileName);
-                if (minify.valid === false) {
-                    cssFileError(errorFile, minify.output);
+                // If there are errors send to errorHandling function
+                if (errors.length !== 0) {
+                    try {
+                        cssFileError(errorFile, errors);
+                    } catch (err) {
+                        errorHandling(err);
+                    }
                 } else {
-                    newHash = md5(minify.output);
-                    if (newHash !== settings[i].hash) {
-                        writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[1].css);
-                        writeFile(`${fileName}_${dateUpdated}.css`, minify.output);
-                        settings[i].hash = newHash;
+                    minify = minifyCSS(cssFinalObjects[department], fileName);
+                    if (minify.valid === false) {
+                        cssFileError(errorFile, minify.output);
+                    } else {
+                        newHash = md5(minify.output);
+                        if (newHash !== settings[i].hash[department]) {
+                            writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department]);
+                            writeFile(`${fileName}_${dateUpdated}.css`, minify.output);
+                            settings[i].hash[department] = newHash;
+                        }
                     }
                 }
-            }
+            });
         } catch (err) {
             errorHandling(err);
         }
