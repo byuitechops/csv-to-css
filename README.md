@@ -28,13 +28,13 @@ Input the URL for the published google sheet where your csv data is.
 
 **CSV Document Format**
 
-* All properties are optional
+* CourseCode and department are required. All other properties are optional
 * If there is customCSS, it needs to be valid when inputted
 
-| @courseName | @lastEditedBy | @lastEditDate | @professorName | courseCode | --color1 | --color24 | --color35 | --button-color | customCSS |
-|-------------|---------------|---------------|----------------|------------|----------|-----------|-----------|----------------|-----------|
-|Intergalactic Warfare | Lord Vader | 6/5/2120 | Darth Sidious | GW350 | Black | Red | | White | .deathStar{ color: grey; } 
-|Singing: Screamo | This guy |  | Ring Wraith | MUS200 | | Black | Grey | |
+| @courseName | @lastEditedBy | @lastEditDate | @professorName | courseCode | department | --color1 | --color24 | --color35 | --button-color | customCSS |
+|-------------|---------------|---------------|----------------|------------|------------|----------|-----------|-----------|----------------|-----------|
+|Intergalactic Warfare | Lord Vader | 6/5/2120 | Darth Sidious | GW350 | Sith |  Black | Red | | White | .deathStar{ color: grey; } 
+|Singing: Screamo | This guy |  | Ring Wraith | MUS200 | Mordor Management | | Black | Grey | |
 
 **Settings**
 
@@ -43,17 +43,20 @@ Input the URL for the published google sheet where your csv data is.
     {
         "url": "https://www.google.com",
         "fileName": "styles",
-        "hash": null
+        "departmentHash": {
+            "courseOne": "HashingGoodness",
+            "courseTwo": "OtherSuchHashingStuffs"
+        }
     },
     {
         "url": "https://docs.google.com/spreadsheets/validresource",
         "fileName": "cssfile",
-        "hash": null
+        "departmentHash": {}
     },
     {
         "url": "https://docs.google.com/spreadsheets/othervalidthings",
         "fileName": "campus",
-        "hash": null
+        "departmentHash": {}
     }
 ]
 ```
@@ -67,12 +70,11 @@ If the CSS is invalid, the file will not be written. Instead a JSON file is writ
 
 ```js
 // Valid CSS
-Valid CSS in file ./style.css
-./style.css written
+style.css written
 
 // Invalid CSS
-Invalid CSS in file ./cssfile.css
-./cssfile.css_errors.json written
+Check cssfile.css for errors
+cssfile.css_errors.json written
 ```
 
 ## Requirements
@@ -97,10 +99,10 @@ Check whether the CSS is valid.
 
 _**if valid**_
 
-Write the valid, formatted CSS to a file named `${settings.filePath}.css`
+Write the valid, formatted CSS to a file named `${file.department}.css`
 
 
 _**if not valid**_
 
-Write a JSON file named `${settings.filePath}_errors.json` containing any errors in the CSS
+Write a JSON file named `${file.department}_errors.json` containing any errors in the CSS
 
