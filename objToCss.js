@@ -5,10 +5,9 @@
 function objToCSS(csvObj) {
     let keysToKeep = ['courseCode', 'department', 'customCSS'];
 
-    var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
-    var cssTags = csvObj.columns.filter(column => column.substr(0, 2) === '--');
-    let departmentObject;
-    let department;
+    // var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
+    // var cssTags = csvObj.columns.filter(column => column.substr(0, 2) === '--');
+    // let departmentObject;
 
     function makeValidateError(message, rowIndex, data) {
         return {
@@ -26,7 +25,7 @@ function objToCSS(csvObj) {
             let isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(courseCode);
             if (!isValidCourseCode) {
                 error = makeValidateError(`${courseCode}: Invalid course code`, rowIndex, row);
-                console.error(`${courseCode} is not a valid Course Code`);
+                // console.error(`${courseCode} is not a valid Course Code`);
             }
         } else {
             error = makeValidateError('There is no course code', rowIndex, row);
@@ -38,9 +37,6 @@ function objToCSS(csvObj) {
         let errors = [
             verifyCourseCode(row, rowIndex),
         ];
-
-        department = row.department ? row.department : null;
-
         return errors.filter(e => e !== null);
     }
 
@@ -53,11 +49,18 @@ function objToCSS(csvObj) {
         }, '');
     }
 
+    /**
+     * Create css String from seperate parts
+     * @param {Object} row 
+     * @param {*} metaData 
+     * @param {*} cssData 
+     */
     function createCssString(row, metaData, cssData) {
 
-        var metaData = '/*' + toKeyVals(row, metaData) + '\n*/';
-        var cssData = `.${row.courseCode} {` + toKeyVals(row, cssData) + '\n}';
+        metaData = '/*' + toKeyVals(row, metaData) + '\n*/';
+        cssData = `.${row.courseCode} {` + toKeyVals(row, cssData) + '\n}';
 
+        // Check for blank line
         if (cssData !== '. {\n}') {
             return `${metaData}\n${cssData}\n${row.customCSS ? row.customCSS + '\n' : ''}\n`;
         }
@@ -79,46 +82,53 @@ function objToCSS(csvObj) {
         return keysNotIncludingKeepers;
     }
 
+    /**
+     * Seperate CSS data from meta-Data
+     * @param {object} cssObj 
+     */
     function seperateMetaFromCSS(cssObj) {
         let sortedObject = Object.keys(cssObj).reduce((sorted, key) => {
             let list = 'meta';
 
+            // Check for metadata indicator
             if (!key.includes('@')) {
                 list = 'css';
-            };
+            }
 
             sorted[list].push(key);
-            // console.log(sorted);
             return sorted;
         }, {
-                'meta': [],
-                'css': []
-            });
+            'meta': [],
+            'css': []
+        });
         return sortedObject;
     }
 
     let cssObjOut = csvObj.reduce((acc, row, rowIndex) => {
         let department = row.department ? row.department : null;
-        if (department === null) {
-
-        }
 
         // Verify that the row has the correct parts/is valid
         let errors = verifyRow(row, rowIndex);
+        if (department === null) {
+            errors.push(makeValidateError('Department is required', rowIndex, row));
+            if (row.courseCode) department = row.courseCode;
+            else department = row.courseName;
+        }
         let seperatedKeys = seperateKeysToKeep(row);
 
         let metaDataAndCssObj = seperateMetaFromCSS(seperatedKeys);
         let cssString = createCssString(row, metaDataAndCssObj.meta, metaDataAndCssObj.css);
 
-
-        // console.log(things);
-        // acc.push(objectToReturn);
-        // if (department !== null) {
         if (acc[department]) {
-            acc[department] += cssString;
+            acc[department].cssString += cssString;
+            acc[department].errors = acc[department].errors.concat(errors);
         } else {
-            acc[department] = cssString;
+            acc[department] = {
+                cssString,
+                errors
+            };
         }
+
 
         return acc;
     }, {});

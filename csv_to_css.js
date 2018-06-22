@@ -87,15 +87,15 @@ function csvToObj(csvString) {
  * @param {string} path 
  */
 function validateCss(cssString, path) {
-    let errors = reporter(validate.validateString(cssString, path));
+    let errors = reporter(validate.validateString(cssString.cssString, path));
     let parsedErrors;
     try {
         parsedErrors = JSON.parse(errors);
     } catch (err) {
         errorHandling(err);
     }
-    if (cssString.err && cssString.err.length > 0) {
-        parsedErrors.push(cssString.err);
+    if (cssString.errors && cssString.errors.length > 0) {
+        parsedErrors = parsedErrors.concat(cssString.errors);
     }
     return parsedErrors;
 }
@@ -174,7 +174,6 @@ async function main() {
 
     for (let i = 0; i < settings.length; i++) {
         try {
-            // console.log(path);
             let csvString = await urlToCsv(settings[i].url);
             let csvObj = csvToObj(csvString);
             let cssFinalObjects = objToCss(csvObj);
@@ -196,15 +195,15 @@ async function main() {
                         errorHandling(err);
                     }
                 } else {
-                    minify = minifyCSS(cssFinalObjects[department], fileName);
+                    minify = minifyCSS(cssFinalObjects[department].cssString, fileName);
                     if (minify.valid === false) {
                         cssFileError(errorFile, minify.output);
                     } else {
                         newHash = md5(minify.output);
-                        if (newHash !== settings[i].hash[department]) {
-                            writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department]);
+                        if (newHash !== settings[i].departmentHash[department]) {
+                            writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department].cssString);
                             writeFile(`${fileName}_${dateUpdated}.css`, minify.output);
-                            settings[i].hash[department] = newHash;
+                            settings[i].departmentHash[department] = newHash;
                         }
                     }
                 }
