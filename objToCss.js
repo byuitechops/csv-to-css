@@ -21,8 +21,8 @@ function objToCSS(csvObj) {
         let error = null;
 
         if (row.courseCode) {
-            let courseCode = row.courseCode;
-            let isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(courseCode);
+            let courseCode = row.courseCode,
+                isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(courseCode);
             if (!isValidCourseCode) {
                 error = makeValidateError(`${courseCode}: Invalid course code`, rowIndex, row);
                 // console.error(`${courseCode} is not a valid Course Code`);
@@ -105,19 +105,18 @@ function objToCSS(csvObj) {
     }
 
     let cssObjOut = csvObj.reduce((acc, row, rowIndex) => {
-        let department = row.department ? row.department : null;
+        let department = row.department ? row.department : null,
 
-        // Verify that the row has the correct parts/is valid
-        let errors = verifyRow(row, rowIndex);
+            // Verify that the row has the correct parts/is valid
+            errors = verifyRow(row, rowIndex);
         if (department === null) {
             errors.push(makeValidateError('Department is required', rowIndex, row));
             if (row.courseCode) department = row.courseCode;
             else department = row.courseName;
         }
-        let seperatedKeys = seperateKeysToKeep(row);
-
-        let metaDataAndCssObj = seperateMetaFromCSS(seperatedKeys);
-        let cssString = createCssString(row, metaDataAndCssObj.meta, metaDataAndCssObj.css);
+        let seperatedKeys = seperateKeysToKeep(row),
+            metaDataAndCssObj = seperateMetaFromCSS(seperatedKeys),
+            cssString = createCssString(row, metaDataAndCssObj.meta, metaDataAndCssObj.css);
 
         if (acc[department]) {
             acc[department].cssString += cssString;
