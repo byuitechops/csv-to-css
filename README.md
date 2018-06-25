@@ -33,7 +33,7 @@ Input the URL for the published google sheet where your csv data is.
 
 | @courseName | @lastEditedBy | @lastEditDate | @professorName | courseCode | department | --color1 | --color24 | --color35 | --button-color | customCSS |
 |-------------|---------------|---------------|----------------|------------|------------|----------|-----------|-----------|----------------|-----------|
-|Intergalactic Warfare | Lord Vader | 6/5/2120 | Darth Sidious | GW350 | Sith |  Black | Red | | White | .deathStar{ color: grey; } 
+|Intergalactic Warfare | Lord Vader | 6/5/2120 | Darth Sidious | GW350 | Sith |  Black | Red |White  || .deathStar{ color: grey; } |
 |Singing: Screamo | This guy |  | Ring Wraith | MUS200 | Mordor Management | | Black | Grey | |
 
 **Settings**
@@ -41,21 +41,21 @@ Input the URL for the published google sheet where your csv data is.
 ```json
 [
     {
-        "url": "https://www.google.com",
-        "fileName": "styles",
+        "url": "https://docs.google.com/spreadsheets/validresource",
+        "directoryPath": "./Campus/",
         "departmentHash": {
-            "courseOne": "HashingGoodness",
-            "courseTwo": "OtherSuchHashingStuffs"
+            "Sith": "HashingGoodness",
+            "Mordor Management": "OtherSuchHashingStuffs"
         }
     },
     {
         "url": "https://docs.google.com/spreadsheets/validresource",
-        "fileName": "cssfile",
+        "directoryPath": "cssfile",
         "departmentHash": {}
     },
     {
         "url": "https://docs.google.com/spreadsheets/othervalidthings",
-        "fileName": "campus",
+        "directoryPath": "campus",
         "departmentHash": {}
     }
 ]
