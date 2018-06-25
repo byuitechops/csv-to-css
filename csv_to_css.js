@@ -3,18 +3,18 @@
 /*eslint linebreak-style: [0]*/
 
 
-const request = require('request');
-const dsv = require('d3-dsv');
-const fs = require('fs');
-const validate = require('csstree-validator');
-const reporter = validate.reporters.json;
-const cleanCSS = require('clean-css');
-const chalk = require('chalk');
-const md5 = require('md5');
-const path = require('path');
-const date = new Date();
-const dateUpdated = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
-const objToCss = require('./objToCss');
+const request = require('request'),
+    dsv = require('d3-dsv'),
+    fs = require('fs'),
+    validate = require('csstree-validator'),
+    reporter = validate.reporters.json,
+    cleanCSS = require('clean-css'),
+    chalk = require('chalk'),
+    md5 = require('md5'),
+    path = require('path'),
+    date = new Date(),
+    dateUpdated = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`,
+    objToCss = require('./objToCss');
 let settingsHash;
 
 
@@ -46,7 +46,7 @@ function readSettings(dirPath) {
  */
 function urlToCsv(url) {
     return new Promise((resolve, reject) => {
-        var options = {
+        let options = {
             method: 'GET',
             uri: url
         };
@@ -87,8 +87,8 @@ function csvToObj(csvString) {
  * @param {string} path 
  */
 function validateCss(cssString, path) {
-    let errors = reporter(validate.validateString(cssString.cssString, path));
-    let parsedErrors;
+    let errors = reporter(validate.validateString(cssString.cssString, path)),
+        parsedErrors;
     try {
         parsedErrors = JSON.parse(errors);
     } catch (err) {
@@ -146,6 +146,32 @@ function writeFile(path, fileGuts) {
 }
 
 /**
+ * Checks if the directory defined in settings.directoryPath exists.
+ * Creates it if it doesn't.
+ * 
+ * Code drawn from StackOverflow: https://stackoverflow.com/a/40385651
+ * 
+ * @param {String} pathName 
+ */
+function createDir(pathName) {
+    function isDir(dpath) {
+        try {
+            return fs.lstatSync(dpath).isDirectory();
+        } catch (e) {
+            return false;
+        }
+    }
+
+    pathName = path.normalize(pathName).split(path.sep);
+    pathName.forEach((sdir, index) => {
+        console.log(sdir);
+        var pathInQuestion = pathName.slice(0, index + 1).join(path.sep);
+        if (!isDir(pathInQuestion) && pathInQuestion) fs.mkdirSync(pathInQuestion);
+    });
+}
+
+
+/**
  * Write errors in CSS code to errors file
  * @param {File} errorFile 
  * @param {Object} errors 
@@ -168,24 +194,27 @@ function errorHandling(err) {
 }
 
 async function main() {
-    let dirPath = path.resolve(__dirname);
-    let settings = readSettings(dirPath);
-    let formattedSettings;
+    let dirPath = path.resolve(__dirname),
+        settings = readSettings(dirPath),
+        formattedSettings;
 
     for (let i = 0; i < settings.length; i++) {
         try {
-            let csvString = await urlToCsv(settings[i].url);
-            let csvObj = csvToObj(csvString);
-            let cssFinalObjects = objToCss(csvObj);
+            let csvString = await urlToCsv(settings[i].url),
+                csvObj = csvToObj(csvString),
+                cssFinalObjects = objToCss(csvObj),
+                pathName = settings[i].directoryPath.slice(-1) === '/' ? settings[i].directoryPath : settings[i].directoryPath + '/';
+            createDir(pathName);
+            createDir(`${pathName}minified/`);
 
             Object.keys(cssFinalObjects).forEach(department => {
-                let fileName = department.replace(/\s/g, '_');
-                let errors = validateCss(cssFinalObjects[department], fileName);
-                let errorFile = `${department}_errors_${dateUpdated}.json`;
-                let newHash;
-                let minify = {
-                    'valid': true
-                };
+                let fileName = department.replace(/\s/g, '_'),
+                    errors = validateCss(cssFinalObjects[department], fileName),
+                    errorFile = `${pathName}${department}_errors_${dateUpdated}.json`,
+                    newHash,
+                    minify = {
+                        'valid': true
+                    };
 
                 // If there are errors send to errorHandling function
                 if (errors.length !== 0) {
@@ -201,8 +230,8 @@ async function main() {
                     } else {
                         newHash = md5(minify.output);
                         if (newHash !== settings[i].departmentHash[department]) {
-                            writeFile(`${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department].cssString);
-                            writeFile(`${fileName}_${dateUpdated}.css`, minify.output);
+                            writeFile(`${pathName}${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department].cssString);
+                            writeFile(`${pathName}minified/${fileName}_${dateUpdated}.css`, minify.output);
                             settings[i].departmentHash[department] = newHash;
                         }
                     }
