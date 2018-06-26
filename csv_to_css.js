@@ -2,7 +2,6 @@
 
 /*eslint linebreak-style: [0]*/
 
-
 const request = require('request'),
     dsv = require('d3-dsv'),
     fs = require('fs'),
@@ -17,15 +16,8 @@ const request = require('request'),
     objToCss = require('./objToCss');
 let settingsHash;
 
-
-// read the settings from wherever they are
-
-// md5 needs non-parsed json to work. 
-// 1. pass in object to readSettings including settingsHash
-// 2. do it in two parts
-
 /**
- * 
+ * Read in settings from settings.json file.
  * @param {string} dirPath 
  */
 function readSettings(dirPath) {
@@ -41,7 +33,7 @@ function readSettings(dirPath) {
 }
 
 /**
- * 
+ * Get the csv from `${settings.url}`
  * @param {string} url 
  */
 function urlToCsv(url) {
@@ -164,7 +156,6 @@ function createDir(pathName) {
 
     pathName = path.normalize(pathName).split(path.sep);
     pathName.forEach((sdir, index) => {
-        console.log(sdir);
         var pathInQuestion = pathName.slice(0, index + 1).join(path.sep);
         if (!isDir(pathInQuestion) && pathInQuestion) fs.mkdirSync(pathInQuestion);
     });
@@ -204,8 +195,6 @@ async function main() {
                 csvObj = csvToObj(csvString),
                 cssFinalObjects = objToCss(csvObj),
                 pathName = settings[i].directoryPath.slice(-1) === '/' ? settings[i].directoryPath : settings[i].directoryPath + '/';
-            createDir(pathName);
-            createDir(`${pathName}minified/`);
 
             Object.keys(cssFinalObjects).forEach(department => {
                 let fileName = department.replace(/\s/g, '_'),
@@ -217,6 +206,7 @@ async function main() {
                     };
 
                 // If there are errors send to errorHandling function
+                createDir(pathName);
                 if (errors.length !== 0) {
                     try {
                         cssFileError(errorFile, errors);
@@ -231,6 +221,7 @@ async function main() {
                         newHash = md5(minify.output);
                         if (newHash !== settings[i].departmentHash[department]) {
                             writeFile(`${pathName}${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department].cssString);
+                            createDir(`${pathName}minified/`);
                             writeFile(`${pathName}minified/${fileName}_${dateUpdated}.css`, minify.output);
                             settings[i].departmentHash[department] = newHash;
                         }
