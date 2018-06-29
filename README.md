@@ -38,6 +38,10 @@ Input the URL for the published google sheet where your csv data is.
 
 **Settings**
 
+* url: The url to the _published_ document  
+* directoryPath: the relative path to the desired directory location
+* departmentHash: An object containing the md5 hash for each seperate department
+
 ```json
 [
     {
@@ -50,12 +54,13 @@ Input the URL for the published google sheet where your csv data is.
     },
     {
         "url": "https://docs.google.com/spreadsheets/validresource",
-        "directoryPath": "cssfile",
+        "directoryPath": "./Online",
+            // When adding a new file, create the blank departmentHash object
         "departmentHash": {}
     },
     {
         "url": "https://docs.google.com/spreadsheets/othervalidthings",
-        "directoryPath": "campus",
+        "directoryPath": "./Campus",
         "departmentHash": {}
     }
 ]
