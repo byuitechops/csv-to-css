@@ -16,6 +16,8 @@ npm install -g byuitechops/csv-to-css
 
 ## How to Run
 
+* Navigate to the folder where you want the CSS saved
+
 ```js
 csvToCss
 ```
@@ -55,8 +57,7 @@ Input the URL for the published google sheet where your csv data is.
     {
         "url": "https://docs.google.com/spreadsheets/validresource",
         "directoryPath": "./Online",
-            // When adding a new file, create the blank departmentHash object
-        "departmentHash": {}
+        "departmentHash": {"Blank object"}
     },
     {
         "url": "https://docs.google.com/spreadsheets/othervalidthings",
