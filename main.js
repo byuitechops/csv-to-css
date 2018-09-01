@@ -101,11 +101,12 @@ function csvToObj(csvString) { //
     });
     return csvObj;
 }
-// TODO Finish Adding Comments and Explinations
+
 /*************************************************************************
  * change the js object to correctly formatted css.
  * @param {string} cssString css string to be validated
- * @param {string} path ---- 
+ * @param {string} path - 
+ * TODO Ask Theron What this is supposed to do
  *************************************************************************/
 function validateCss(cssString, path) {
     let errors = reporter(validate.validateString(cssString.cssString, path));
@@ -158,7 +159,8 @@ function minifyCSS(cssString, fileName) {
  * 
  * @param {String} pathName ----
  *************************************************************************/
-function createDir(pathName) { // 
+function createDir(pathName) { //
+    // find out whether "dpath" is a directory
     function isDir(dpath) {
         try {
             return fs.lstatSync(dpath).isDirectory();
@@ -166,9 +168,11 @@ function createDir(pathName) { //
             return false;
         }
     }
+    // normalize path name then split it
     pathName = path.normalize(pathName).split(path.sep);
     pathName.forEach((sdir, index) => {
         var pathInQuestion = pathName.slice(0, index + 1).join(path.sep);
+        // if the pathName is truthy but the directory doesn't currently exist...
         if (!isDir(pathInQuestion) && pathInQuestion) fs.mkdirSync(pathInQuestion);
     });
 }
@@ -188,73 +192,73 @@ function cssFileError(errorFile, errors) { //
 }
 
 
-// // TODO Abstract main() further
-// /*************************************************************************
-//  * 
-//  *************************************************************************/
-// async function main() {
-//     let dirPath = path.resolve(__dirname),
-//         settings = readSettings(dirPath),
-//         formattedSettings;
+// TODO Abstract main() further
+/*************************************************************************
+ * 
+ *************************************************************************/
+async function main() {
+    let dirPath = path.resolve(__dirname),
+        settings = readSettings(dirPath),
+        formattedSettings;
 
-//     for (let i = 0; i < settings.length; i++) {
-//         try {
-//             let csvString = await urlToCsv(settings[i].url),
-//                 csvObj = csvToObj(csvString),
-//                 cssFinalObjects = objToCss(csvObj),
-//                 pathName = settings[i].directoryPath.slice(-1) === '/' ? settings[i].directoryPath : settings[i].directoryPath + '/';
+    for (let i = 0; i < settings.length; i++) {
+        try {
+            let csvString = await urlToCsv(settings[i].url),
+                csvObj = csvToObj(csvString),
+                cssFinalObjects = objToCss(csvObj),
+                pathName = settings[i].directoryPath.slice(-1) === '/' ? settings[i].directoryPath : settings[i].directoryPath + '/';
 
-//             Object.keys(cssFinalObjects).forEach(department => {
-//                 let fileName = department.replace(/\s/g, '_'),
-//                     errors = validateCss(cssFinalObjects[department], fileName),
-//                     errorFile = `${pathName}${department}_errors_${dateUpdated}.json`,
-//                     newHash,
-//                     minify = {
-//                         'valid': true
-//                     };
+            Object.keys(cssFinalObjects).forEach(department => {
+                let fileName = department.replace(/\s/g, '_'),
+                    errors = validateCss(cssFinalObjects[department], fileName),
+                    errorFile = `${pathName}${department}_errors_${dateUpdated}.json`,
+                    newHash,
+                    minify = {
+                        'valid': true
+                    };
 
-//                 // If there are errors send to errorHandling function
-//                 createDir(pathName);
-//                 if (errors.length !== 0) {
-//                     try {
-//                         cssFileError(errorFile, errors);
-//                     } catch (err) {
-//                         errorHandling(err);
-//                     }
-//                 } else {
-//                     minify = minifyCSS(cssFinalObjects[department].cssString, fileName);
-//                     if (minify.valid === false) {
-//                         cssFileError(errorFile, minify.output);
-//                     } else {
-//                         newHash = md5(minify.output);
-//                         if (newHash !== settings[i].departmentHash[department]) {
-//                             writeFile(`${pathName}${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department].cssString);
-//                             createDir(`${pathName}minified/`);
-//                             writeFile(`${pathName}minified/${fileName}_${dateUpdated}.css`, minify.output);
-//                             settings[i].departmentHash[department] = newHash;
-//                         }
-//                     }
-//                 }
-//             });
-//         } catch (err) {
-//             errorHandling(err);
-//         }
-//     }
-//     try {
-//         formattedSettings = JSON.stringify(settings, null, 4);
-//     } catch (err) {
-//         errorHandling(err);
-//     }
-//     if (settingsHash !== md5(formattedSettings)) {
-//         try {
-//             fs.writeFileSync(`${__dirname}/settings.json`, formattedSettings);
-//         } catch (err) {
-//             errorHandling(err);
-//         }
-//         console.log(chalk.green('Settings updated'));
-//     } else {
-//         console.log(chalk.green('No files changed'));
-//     }
-// }
+                // If there are errors send to errorHandling function
+                createDir(pathName);
+                if (errors.length !== 0) {
+                    try {
+                        cssFileError(errorFile, errors);
+                    } catch (err) {
+                        errorHandling(err);
+                    }
+                } else {
+                    minify = minifyCSS(cssFinalObjects[department].cssString, fileName);
+                    if (minify.valid === false) {
+                        cssFileError(errorFile, minify.output);
+                    } else {
+                        newHash = md5(minify.output);
+                        if (newHash !== settings[i].departmentHash[department]) {
+                            writeFile(`${pathName}${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department].cssString);
+                            createDir(`${pathName}minified/`);
+                            writeFile(`${pathName}minified/${fileName}_${dateUpdated}.css`, minify.output);
+                            settings[i].departmentHash[department] = newHash;
+                        }
+                    }
+                }
+            });
+        } catch (err) {
+            errorHandling(err);
+        }
+    }
+    try {
+        formattedSettings = JSON.stringify(settings, null, 4);
+    } catch (err) {
+        errorHandling(err);
+    }
+    if (settingsHash !== md5(formattedSettings)) {
+        try {
+            fs.writeFileSync(`${__dirname}/settings.json`, formattedSettings);
+        } catch (err) {
+            errorHandling(err);
+        }
+        console.log(chalk.green('Settings updated'));
+    } else {
+        console.log(chalk.green('No files changed'));
+    }
+}
 
-// main();
+main();
