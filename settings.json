@@ -1,16 +1,20 @@
-[{
-        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv",
-        "directoryPath": "./Campus/",
+[
+    {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0AML_IbiwbQQq2AzniXDXwC3OW3Nbx8ErozNc5YBKQrwNfaVKzfU3in6UHxYL71eRGIU1k9riRVwD/pub?gid=459641828&single=true&output=csv",
+        "name": "Pathway",
+        "extraCss": "",
         "departmentHash": {}
     },
     {
         "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT0AML_IbiwbQQq2AzniXDXwC3OW3Nbx8ErozNc5YBKQrwNfaVKzfU3in6UHxYL71eRGIU1k9riRVwD/pub?gid=0&single=true&output=csv",
-        "directoryPath": "./Campus",
+        "name": "Online",
+        "extraCss": "./cssForBottomOnline.css",
         "departmentHash": {}
     },
     {
-        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=1272100&single=true&output=csv",
-        "directoryPath": "./Online",
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTfipS75euk-z98mVV-uQRvgunM9k69utWbjGZl6lCN_xp7V0wGRS8UMPgwYtUMa85gNlJXqciM4zEZ/pub?gid=0&single=true&output=csv",
+        "name": "Campus",
+        "extraCss": "",
         "departmentHash": {}
     }
 ]

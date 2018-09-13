@@ -114,7 +114,7 @@ function minifyCSS(cssString, fileName) {
 
         // If there are validation errors it will return the errors.
     } else {
-        console.error(chalk.redBright(`There was an error minifying ${fileName}`));
+        console.error(chalk.red(`There was an error minifying ${fileName}`));
         return {
             'output': errors,
             'valid': false
@@ -138,7 +138,7 @@ function writeFile(path, fileGuts) {
 }
 
 /**
- * Checks if the directory defined in settings.directoryPath exists.
+ * Checks if the directory defined in settings.name exists.
  * Creates it if it doesn't.
  * 
  * Code drawn from StackOverflow: https://stackoverflow.com/a/40385651
@@ -173,7 +173,7 @@ function cssFileError(errorFile, errors) {
     } catch (err) {
         errorHandling(err);
     }
-    console.log(chalk.redBright(`Check ${errorFile} for errors`));
+    console.log(chalk.red(`Check ${errorFile} for errors`));
 }
 
 /**
@@ -193,13 +193,14 @@ async function main() {
         try {
             let csvString = await urlToCsv(settings[i].url),
                 csvObj = csvToObj(csvString),
-                cssFinalObjects = objToCss(csvObj),
-                pathName = settings[i].directoryPath.slice(-1) === '/' ? settings[i].directoryPath : settings[i].directoryPath + '/';
-
+                extraCss = settings[i].extraCss !== '' ? fs.readFileSync(path.join(dirPath, settings[i].extraCss), { encoding: 'utf8' }) : '';
+            let cssFinalObjects = objToCss(csvObj, settings[i], extraCss),
+                pathName = settings[i].name;
             Object.keys(cssFinalObjects).forEach(department => {
+
                 let fileName = department.replace(/\s/g, '_'),
                     errors = validateCss(cssFinalObjects[department], fileName),
-                    errorFile = `${pathName}${department}_errors_${dateUpdated}.json`,
+                    errorFile = path.join(pathName, `${department}_errors_${dateUpdated}.json`),
                     newHash,
                     minify = {
                         'valid': true
@@ -220,9 +221,9 @@ async function main() {
                     } else {
                         newHash = md5(minify.output);
                         if (newHash !== settings[i].departmentHash[department]) {
-                            writeFile(`${pathName}${fileName}_readable_${dateUpdated}.css`, cssFinalObjects[department].cssString);
-                            createDir(`${pathName}minified/`);
-                            writeFile(`${pathName}minified/${fileName}_${dateUpdated}.css`, minify.output);
+                            writeFile(path.join(pathName, `${fileName}_readable_${dateUpdated}.css`), cssFinalObjects[department].cssString);
+                            createDir(path.join(pathName, 'minified'));
+                            writeFile(path.join(pathName, 'minified', `${fileName}_${dateUpdated}.css`), minify.output);
                             settings[i].departmentHash[department] = newHash;
                         }
                     }
