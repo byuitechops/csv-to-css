@@ -1,8 +1,8 @@
 /**
  * change the js object to correctly formatted css.
- * @param {object} csvObj 
+ * @param {Object} csvObj 
  */
-function objToCSS(csvObj) {
+function objToCSS(csvObj, settings, extraCss) {
     let keysToKeep = ['courseCode', 'department', 'customCSS'];
 
     // var metaDataTags = csvObj.columns.filter(column => column[0] === '@');
@@ -22,7 +22,7 @@ function objToCSS(csvObj) {
 
         if (row.courseCode) {
             let courseCode = row.courseCode,
-                isValidCourseCode = /^[a-z]{1,5}\d{3}(?:-[a-z]+)?$/.test(courseCode);
+                isValidCourseCode = /^[a-z]{1,5}\d{3}(?:[a-z]+)?(?:-[a-z]+)?$/.test(courseCode);
             if (!isValidCourseCode) {
                 error = makeValidateError(`${courseCode}: Invalid course code`, rowIndex, row);
                 // console.error(`${courseCode} is not a valid Course Code`);
@@ -97,11 +97,17 @@ function objToCSS(csvObj) {
 
             sorted[list].push(key);
             return sorted;
-        }, {
-            'meta': [],
-            'css': []
-        });
+        },
+            {
+                'meta': [],
+                'css': []
+            });
         return sortedObject;
+    }
+
+    function changeDepartment(settings) {
+        let name = settings.name.toLowerCase();
+        return name;
     }
 
     let cssObjOut = csvObj.reduce((acc, row, rowIndex) => {
@@ -109,7 +115,12 @@ function objToCSS(csvObj) {
 
             // Verify that the row has the correct parts/is valid
             errors = verifyRow(row, rowIndex);
+
+        //Everything in one file
+        department = changeDepartment(settings);
+
         if (department === null) {
+
             errors.push(makeValidateError('Department is required', rowIndex, row));
             if (row.courseCode) department = row.courseCode;
             else department = row.courseName;
@@ -132,6 +143,7 @@ function objToCSS(csvObj) {
         return acc;
     }, {});
 
+    cssObjOut[settings.name.toLowerCase()].cssString += extraCss;
     return cssObjOut;
 }
 
