@@ -41,14 +41,16 @@ Input the URL for the published google sheet where your csv data is.
 **Settings**
 
 * url: The url to the _published_ document  
-* directoryPath: the relative path to the desired directory location
+* name: Your desired folder name
+* extraCss: Filename of any extra CSS rules you want included in your file. Can be blank.
 * departmentHash: An object containing the md5 hash for each seperate department
 
 ```json
 [
     {
         "url": "https://docs.google.com/spreadsheets/validresource",
-        "directoryPath": "./Campus/",
+        "name": "Campus",
+        "extraCss": "aFileToAppend.css",
         "departmentHash": {
             "Sith": "HashingGoodness",
             "Mordor Management": "OtherSuchHashingStuffs"
@@ -56,12 +58,14 @@ Input the URL for the published google sheet where your csv data is.
     },
     {
         "url": "https://docs.google.com/spreadsheets/validresource",
-        "directoryPath": "./Online",
+        "name": "Online",
+        "extraCss": "",
         "departmentHash": {"Blank object"}
     },
     {
         "url": "https://docs.google.com/spreadsheets/othervalidthings",
-        "directoryPath": "./Campus",
+        "name": "Pathway",
+        "extraCss": "extraFile.css",
         "departmentHash": {}
     }
 ]
