@@ -7,14 +7,28 @@ This tool takes a published CSV document, converts it into a CSS file, determine
 
 ## How to Install
 
+1. Make sure [NodeJS](https://nodejs.org/en/) is downloaded and current
+2. Set Path environment variable if it's not already done
+    * Windows button on keyboard
+    * Type Environment Variables  
+    ![alt text](./readmeImages/typeEnvironment.gif "Set Environment Variable")
+    * Add `%USERPROFILE%\AppData\Roaming\npm;` to the User Path
+    ![alt text](./readmeImages/changePath.gif "Add Environment Variable")
+
+#### Full Process
+
+![alt text](./readmeImages/setEnvVariable.gif "Full Environment Variable Process")
+
 Open the console and type:
 
 ```
 npm install -g byuitechops/csv-to-css
 ```
-
+![alt text](./readmeImages/installTool.gif "npm i -g byuitechops/cvs-to-css")
 
 ## How to Run
+
+* Make sure the `settings.json` file is set correctly
 
 * Navigate to the folder where you want the CSS saved
 
