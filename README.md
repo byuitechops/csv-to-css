@@ -10,9 +10,14 @@ This tool takes a published CSV document, converts it into a CSS file, determine
 1. Make sure [NodeJS](https://nodejs.org/en/) is downloaded and current
 2. Set Path environment variable if it's not already done
     * Windows button on keyboard
-    * Type Environment Variables  
+    * Type Environment Variables
+
     ![alt text](./readmeImages/typeEnvironment.gif "Set Environment Variable")
+
+
     * Add `%USERPROFILE%\AppData\Roaming\npm;` to the User Path
+
+    
     ![alt text](./readmeImages/changePath.gif "Add Environment Variable")
 
 #### Full Process
