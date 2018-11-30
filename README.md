@@ -33,7 +33,7 @@ npm install -g byuitechops/csv-to-css
 
 ## How to Run
 
-* Make sure the `settings.json` file is set correctly
+* Make sure the `settings.json` file is [set correctly](#settings)
 
 ![alt text](./readmeImages/getToSettings.gif "Access Settings file")
 
@@ -61,7 +61,7 @@ Input the URL for the published google sheet where your csv data is.
 |Intergalactic Warfare | Lord Vader | 6/5/2120 | Darth Sidious | GW350 | Sith |  Black | Red |White  || .deathStar{ color: grey; } |
 |Singing: Screamo | This guy |  | Ring Wraith | MUS200 | Mordor Management | | Black | Grey | |
 
-**Settings**
+#### Settings
 
 * url: The url to the _published_ document  
 * name: Your desired folder name
