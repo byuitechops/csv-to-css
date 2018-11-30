@@ -35,6 +35,8 @@ npm install -g byuitechops/csv-to-css
 
 * Make sure the `settings.json` file is set correctly
 
+![alt text](./readmeImages/getToSettings.gif "Access Settings file")
+
 * Navigate to the folder where you want the CSS saved
 
 ```js
