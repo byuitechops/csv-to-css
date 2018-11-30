@@ -33,7 +33,8 @@ npm install -g byuitechops/csv-to-css
 
 ## How to Run
 
-* Make sure the `settings.json` file is [set correctly](#settings)
+* Make sure the `settings.json` file is [set correctly](#settings) 
+    * settings.json path: `$USERPROFILE$\AppData\Roaming\npm\node_modules\csv-to-css\settings.json`
 
 ![alt text](./readmeImages/getToSettings.gif "Access Settings file")
 
