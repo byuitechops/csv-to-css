@@ -43,6 +43,8 @@ npm install -g byuitechops/csv-to-css
 csvToCss
 ```
 
+![alt text](./readmeImages/runTool.gif "How to run tool")
+
 ### Inputs
 
 **CSV URL**
